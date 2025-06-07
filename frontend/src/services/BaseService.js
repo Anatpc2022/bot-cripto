@@ -13,7 +13,10 @@ axios.interceptors.response.use(
     error => {
         if (error.response && error.response.status == 401) {
             console.error("Redirecionado para login pela resposta 401!");
-            window.location.href = "/";
+             if (window.location.pathname !== "/")
+                window.location.href = "/";
+            else
+                return Promise.reject(error.response ? error.response.data : error);
         }
         else
             return Promise.reject(error.response ? error.response.data : error);
