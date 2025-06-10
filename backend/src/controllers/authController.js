@@ -1,21 +1,22 @@
 import jwt from "jsonwebtoken";
+import bcrypt from "bcryptjs";
+import usersRepository from "../repositories/usersRepository.js";
 
 async function doLogin(req, res, next) {
   const email = req.body.email;
   const password = req.body.password;
 
-  if (email === "ana.tpc2022@gmail.com" && password === "Lanna0210") {
-    const token = jwt.sign({ id: 1 }, process.env.JWT_SECRET, {
-      expiresIn: parseInt(process.env.JWT_EXPIRES),
-    });
+  const user = await usersRepository.getUserByEmail(email);
+  if (!user || !user.isActive) return res.sendStatus(401);
 
-    return res.json({
-      id: 1,
-      token,
-    });
-  }
+  const isValid = bcrypt.compareSync(password, user.password);
+  if (!isValid) return res.sendStatus(401);
 
-  res.sendStatus(401);
+  const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
+    expiresIn: parseInt(process.env.JWT_EXPIRES),
+  });
+
+  return res.json({ id: user.id, token });
 }
 
 const blacklist = {};
