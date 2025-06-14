@@ -1,3 +1,4 @@
+import Wallet from "../../components/Wallet/Wallet"
 import NewOrderButton from "../Orders/NewOrderButton";
 import TemplatePage from "../TemplatePage";
 import CandleChart from "./CandleChart";
@@ -17,7 +18,7 @@ function Dashboard() {
       <CandleChart />
       <div className="row">
         <div className="col-6"><Ticker /></div>
-        <div className="col-6">{/* carteira */}</div>
+        <div className="col-6"><Wallet /></div>
       </div>
     </TemplatePage>
   );

@@ -7,8 +7,9 @@
 }
 
 .divScroll {
-    overflow: auto;
-    max-height: 345px;   
+  max-height: 345px;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .tableFixHead {
