@@ -3,26 +3,12 @@ import WalletRow from "./WalletRow";
 import { getBalance } from "../../services/ExchangeService";
 
 function Wallet() {
-  const [fiat, setFiat] = useState("~USD 100");
-  const [balances, setBalances] = useState([
-    {
-      symbol: "BTC",
-      available: "0.001",
-      onOrder: "0.000",
-    },
-    {
-      symbol: "ETH",
-      available: "1.001",
-      onOrder: "0.100",
-    },
-    {
-      symbol: "SOL",
-      available: "17.0017",
-      onOrder: "0.000",
-    },
-  ]);
+  const [fiat, setFiat] = useState("");
+  const [balances, setBalances] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
+    setIsLoading(true);
     getBalance()
       .then((info) => {
         const balances = Object.entries(info)
@@ -41,10 +27,12 @@ function Wallet() {
 
         setBalances(balances);
         setFiat(info.fiatEstimate);
+        setIsLoading(false);
       })
       .catch((err) => {
         console.error(err.response ? err.response.data : err);
         setFiat(err.response ? err.response.data : err.message);
+        setIsLoading(false);
       });
   }, []);
 
@@ -74,7 +62,7 @@ function Wallet() {
               </tr>
             </thead>
             <tbody>
-              {balances && balances.length ? (
+              {!isLoading && balances && balances.length ? (
                 balances.map((item) => (
                   <WalletRow
                     key={item.symbol}
@@ -84,7 +72,9 @@ function Wallet() {
                   />
                 ))
               ) : (
-                <></>
+                <tr className="mb-3">
+                  <td colSpan={3}>Carregando...</td>
+                </tr>
               )}
             </tbody>
           </table>
