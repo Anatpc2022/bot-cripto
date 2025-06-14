@@ -5,6 +5,7 @@ import morgan from "morgan";
 import errorMiddleware from "./middlewares/errorMiddleware.js";
 import authMiddleware from "./middlewares/authMiddleware.js";
 import authController from "./controllers/authController.js";
+import exchangeController from "./controllers/exchangeController.js";
 
 const app = express();
 
@@ -22,7 +23,7 @@ app.use(express.json());
 
 app.post("/login", authController.doLogin);
 
-app.use("/exchange", authMiddleware, (req, res, next) => res.send("Funcionou"));
+app.use("/exchange/balance", authMiddleware, exchangeController.getBalance);
 
 app.post("/logout", authController.doLogout);
 
