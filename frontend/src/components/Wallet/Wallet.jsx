@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import WalletRow from "./WalletRow";
+import { getBalance } from "../../services/ExchangeService";
 
 function Wallet() {
   const [fiat, setFiat] = useState("~USD 100");
@@ -21,6 +22,32 @@ function Wallet() {
     },
   ]);
 
+  useEffect(() => {
+    getBalance()
+      .then((info) => {
+        const balances = Object.entries(info)
+          .map((item) => {
+            return {
+              symbol: item[0],
+              available: item[1].available,
+              onOrder: item[1].onOrder,
+            };
+          })
+          .sort((a, b) => {
+            if (a.symbol > b.symbol) return 1;
+            if (a.symbol < b.symbol) return -1;
+            return 0;
+          });
+
+        setBalances(balances);
+        setFiat(info.fiatEstimate);
+      })
+      .catch((err) => {
+        console.error(err.response ? err.response.data : err);
+        setFiat(err.response ? err.response.data : err.message);
+      });
+  }, []);
+
   return (
     <div className="col-12">
       <div className="card border-0 shadow">
@@ -38,10 +65,10 @@ function Wallet() {
                 <th className="border-bottom" scope="col">
                   MOEDA
                 </th>
-                <th className="border-bottom col-3" scope="col">
+                <th className="border-bottom col-3 text-center" scope="col">
                   Livre
                 </th>
-                <th className="border-bottom col-3" scope="col">
+                <th className="border-bottom col-3 text-center" scope="col">
                   Bloqueada
                 </th>
               </tr>

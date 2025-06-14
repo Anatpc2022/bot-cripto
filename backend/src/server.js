@@ -1,5 +1,6 @@
 import app from "./app.js";
 import logger from "./utils/logger.js";
+import appEm from "./app-em.js";
 
 async function start() {
     logger("sistema", "Sua versão do Node.js é " + process.version);
@@ -13,6 +14,8 @@ async function start() {
     app.listen(process.env.PORT, () => {
         logger("sistema", "O App está escutando na porta " + process.env.PORT);
     })
+
+    appEm.init();
 }
 
 start();
