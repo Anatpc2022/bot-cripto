@@ -1,3 +1,4 @@
+import RiberBot from "../riberBot.js";
 import Exchange from "../utils/exchange.js";
 import logger from "../utils/logger.js";
 
@@ -7,6 +8,7 @@ async function getBalance(req, res, next) {
 
     const userId = res.locals.token.id;
     const exchange = new Exchange();
+    const riberBot = RiberBot.getInstance();
 
     try {
         const info = await exchange.balance();

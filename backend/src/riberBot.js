@@ -17,6 +17,60 @@ export default class RiberBot {
     //inicializar o cérebro
   }
 
+  static FIAT_COINS = ["BRL", "EUR", "GBP"];
+
+  static DOLLAR_COINS = ["USD", "USDT", "USDC", "TUSD", "FDUSD", "UST"];
+
+  async getStableConversion(baseAsset, quoteAsset, baseQty) {
+    if (RiberBot.DOLLAR_COINS.includes(baseAsset)) return baseQty;
+
+    const ticker = await this.getMemory(baseAsset + quoteAsset, "TICKER");
+    if (ticker && ticker.current)
+      return parseFloat(baseQty) * ticker.current.close;
+    return 0;
+  }
+
+  async getFiatConversion(stablecoin, fiatCoin, fiatQty) {
+    const ticker = await this.getMemory(stablecoin + fiatCoin, "TICKER");
+    if (ticker && ticker.current)
+      return parseFloat(fiatQty) / ticker.current.close;
+    return 0;
+  }
+
+  async tryUsdConversion(baseAsset, baseQty) {
+    if (RiberBot.DOLLAR_COINS.includes(baseAsset)) return baseQty;
+    if (RiberBot.FIAT_COINS.includes(baseAsset))
+      return this.getFiatConversion("USDT", baseAsset, baseQty);
+
+    for (let i = 0; i < RiberBot.DOLLAR_COINS.length; i++) {
+      const converted = await this.getStableConversion(
+        baseAsset,
+        RiberBot.DOLLAR_COINS[i],
+        baseQty
+      );
+      if (converted > 0) return converted;
+    }
+
+    return 0;
+  }
+
+  async tryFiatConversion(baseAsset, baseQty, fiat) {
+    if (fiat) fiat = fiat.toUpperCase();
+    if (RiberBot.FIAT_COINS.includes(baseAsset) && baseAsset === fiat)
+      return baseQty;
+
+    const usd = this.tryUsdConversion(baseAsset, baseQty);
+    if (fiat === "USD" || !fiat) return usd;
+
+    let ticker = await this.getMemory("USDT" + fiat, "TICKER");
+    if (ticker && ticker.current) return usd * ticker.current.close;
+
+    ticker = await this.getMemory(fiat + "USDT", "TICKER");
+    if (ticker && ticker.current) return usd / ticker.current.close;
+
+    return usd;
+  }
+
   buildMemoryKey(symbol, index, interval = undefined) {
     const indexKey = interval ? `${index}_${interval}` : index;
     return `${symbol}:${indexKey}`;
