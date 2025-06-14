@@ -20,9 +20,15 @@ export default class Exchange {
         return this.binance.exchangeInfo();
     }
 
-    async balance(){
+    async balance() {
         await this.binance.useServerTime();
         return this.binance.balance();
+    }
+
+    tickerStream(callback) {
+        this.binance.websockets.prevDay(null, (data, converted) => {
+            callback(converted);
+        }, true);
     }
 
 }
