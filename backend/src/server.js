@@ -2,6 +2,7 @@ import database from "./db.js";
 import app from "./app.js";
 import logger from "./utils/logger.js";
 import appEm from "./app-em.js";
+import appWs from "./app-ws.js";
 import usersRepository from "./repositories/usersRepository.js";
 
 async function start() {
@@ -14,11 +15,12 @@ async function start() {
 
     logger("sistema", "Iniciando os Apps do servidor...");
 
-    app.listen(process.env.PORT, () => {
+    const server = app.listen(process.env.PORT, () => {
         logger("sistema", "O App está escutando na porta " + process.env.PORT);
     })
 
-    appEm.init(users[0].id);
+    const wss = appWs(server);
+    appEm.init(users[0].id, wss);
 }
 
 start();

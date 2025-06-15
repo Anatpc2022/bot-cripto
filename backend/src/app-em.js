@@ -14,7 +14,12 @@ function startTickerMonitor() {
   logger("M-TICKER", "Ticker Monitor foi iniciado!");
 }
 
-async function init(userId) {
+let WSS;
+
+async function init(userId, wssInstance) {
+  WSS = wssInstance;
+  setInterval(() => WSS.broadcast({ message: new Date() }), 3000);
+
   startTickerMonitor();
 
   //monitoramento da conta do usuário
