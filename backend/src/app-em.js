@@ -2,23 +2,25 @@ import RiberBot from "./riberBot.js";
 import Exchange from "./utils/exchange.js";
 import logger from "./utils/logger.js";
 
+let WSS;
+
 function startTickerMonitor() {
   new Exchange().tickerStream(async (markets) => {
     const riberBot = RiberBot.getInstance();
-    markets.map((mkt) =>
+    let results = await Promise.all(markets.map((mkt) =>
       riberBot.updateMemory(mkt.symbol, "TICKER", null, mkt)
-    );
+    ));
+    if (!results) return;
 
-    //notificar o usuário se disparou alguma automação
+    results = results.filter(r => r);
+        if (results.length)
+            results.map(r => WSS.broadcast({ notification: r }));//{ text, type: success|error }
   });
   logger("M-TICKER", "Ticker Monitor foi iniciado!");
 }
 
-let WSS;
-
 async function init(userId, wssInstance) {
   WSS = wssInstance;
-  setInterval(() => WSS.broadcast({ message: new Date() }), 3000);
 
   startTickerMonitor();
 
