@@ -19,12 +19,27 @@ function startTickerMonitor() {
   logger("M-TICKER", "Ticker Monitor foi iniciado!");
 }
 
+function startUserDataMonitor(userId){
+    try{
+        //carregar saldos da carteira
+
+        //configurar stream de user data
+
+        logger("U-" + userId, "O Monitor de Dados do Usuário foi iniciado!");
+    }
+    catch(err){
+        logger("U-" + userId, "O Monitor de Dados do Usuário NÃO foi iniciado!\n" + (err.response ? JSON.stringify(err.response.data) : err.message));
+    }
+}
+
 async function init(userId, wssInstance) {
   WSS = wssInstance;
 
   startTickerMonitor();
 
-  //monitoramento da conta do usuário
+  startUserDataMonitor(userId);
+
+  //carregar últimas ordens executadas
 
   //monitoramento de ativos (candles)
 
