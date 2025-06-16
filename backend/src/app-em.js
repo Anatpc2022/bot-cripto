@@ -4,6 +4,8 @@ import logger from "./utils/logger.js";
 
 let WSS;
 
+const LOGS = process.env.APP_EM_LOGS === "true";
+
 function startTickerMonitor() {
   new Exchange().tickerStream(async (markets) => {
     const riberBot = RiberBot.getInstance();
@@ -26,15 +28,20 @@ async function loadWallet(userId, executeAutomations = true) {
   const info = await exchange.balance();
   const riberBot = RiberBot.getInstance();
   let results = await Promise.all(
-    Object.keys(info).map((item) =>
+    Object.keys(info).map(async (item) => {
+      if (executeAutomations) {
+        const memory = await riberBot.getMemory(item, `WALLET_${userId}`);
+        if (memory === info[item].available) return;
+      }
+
       riberBot.updateMemory(
         item,
         `WALLET_${userId}`,
         null,
         info[item].available,
         executeAutomations
-      )
-    )
+      );
+    })
   );
 
   const wallet = Object.keys(info).map((item) => {
@@ -53,6 +60,42 @@ async function loadWallet(userId, executeAutomations = true) {
   return wallet;
 }
 
+function processBalanceData(userId, data) {
+  if (LOGS) logger("U-" + userId, JSON.stringify(data));
+
+  loadWallet(userId, true).catch((err) =>
+    logger("U-" + userId, err.body ? JSON.stringify(err.body) : err.message)
+  );
+}
+
+async function processExecutionData(userId, data) {
+    if(data.x === "NEW") return;
+    
+    if(LOGS) logger("U-" + userId, JSON.stringify(data));
+
+    const order = {
+        symbol: data.s,
+        orderId: data.i,
+        side: data.S,
+        type: data.o,
+        status: data.X,
+        transactTime: data.T
+    }
+
+    if(order.status === "FILLED"){
+        const quoteAmount = parseFloat(data.Z);
+        order.avgPrice = quoteAmount / parseFloat(data.z);
+        order.commission = data.n;
+        order.quantity = data.q;
+        const isQuoteCommission = data.N && order.symbol.endsWith(data.N);
+        order.net = isQuoteCommission ? quoteAmount - parseFloat(order.commission) : quoteAmount;
+    }
+    else if(order.status === "REJECTED")
+        order.obs = data.r;
+
+    //order update
+}
+
 function startUserDataMonitor(userId) {
   try {
     loadWallet(userId, false).catch((err) =>
@@ -63,7 +106,11 @@ function startUserDataMonitor(userId) {
       )
     );
 
-    //configurar stream de user data
+    const exchange = new Exchange(userId);
+    exchange.userDataStream(
+      (data) => processBalanceData(userId, data),
+      (data) => processExecutionData(userId, data)
+    );
 
     logger("U-" + userId, "O Monitor de Dados do Usuário foi iniciado!");
   } catch (err) {
