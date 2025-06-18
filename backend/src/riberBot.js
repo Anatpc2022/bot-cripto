@@ -115,6 +115,15 @@ export default class RiberBot {
     ticker.volume = parseFloat(ticker.volume);
     ticker.quoteVolume = parseFloat(ticker.quoteVolume);
 
+    delete ticker.eventTime;
+    delete ticker.eventType;
+    delete ticker.lastTradeId;
+    delete ticker.firstTradeId;
+    delete ticker.numTrades;
+    delete ticker.closeTime;
+    delete ticker.openTime;
+    delete ticker.symbol;
+
     const currentMemory = await this.getMemory(symbol, index);
 
     const newMemory = {};

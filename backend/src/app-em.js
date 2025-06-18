@@ -1,18 +1,26 @@
 import RiberBot from "./riberBot.js";
 import Exchange from "./utils/exchange.js";
 import logger from "./utils/logger.js";
+import symbolsRepository from "./repositories/symbolsRepository.js";
 
 let WSS;
 
 const LOGS = process.env.APP_EM_LOGS === "true";
 
-function startTickerMonitor() {
+async function startTickerMonitor() {
+
+  const symbolsMap = {};
+  
+  const symbolsArray = await symbolsRepository.getSymbols();
+  symbolsArray.map((symbolObj) => (symbolsMap[symbolObj.symbol] = true));
+
   new Exchange().tickerStream(async (markets) => {
     const riberBot = RiberBot.getInstance();
     let results = await Promise.all(
-      markets.map((mkt) =>
-        riberBot.updateMemory(mkt.symbol, "TICKER", null, mkt)
-      )
+      markets.map((mkt) => {
+        if (!symbolsMap[mkt.symbol]) return false;
+        return riberBot.updateMemory(mkt.symbol, "TICKER", null, mkt);
+      })
     );
     if (!results) return;
 
@@ -69,31 +77,31 @@ function processBalanceData(userId, data) {
 }
 
 async function processExecutionData(userId, data) {
-    if(data.x === "NEW") return;
-    
-    if(LOGS) logger("U-" + userId, JSON.stringify(data));
+  if (data.x === "NEW") return;
 
-    const order = {
-        symbol: data.s,
-        orderId: data.i,
-        side: data.S,
-        type: data.o,
-        status: data.X,
-        transactTime: data.T
-    }
+  if (LOGS) logger("U-" + userId, JSON.stringify(data));
 
-    if(order.status === "FILLED"){
-        const quoteAmount = parseFloat(data.Z);
-        order.avgPrice = quoteAmount / parseFloat(data.z);
-        order.commission = data.n;
-        order.quantity = data.q;
-        const isQuoteCommission = data.N && order.symbol.endsWith(data.N);
-        order.net = isQuoteCommission ? quoteAmount - parseFloat(order.commission) : quoteAmount;
-    }
-    else if(order.status === "REJECTED")
-        order.obs = data.r;
+  const order = {
+    symbol: data.s,
+    orderId: data.i,
+    side: data.S,
+    type: data.o,
+    status: data.X,
+    transactTime: data.T,
+  };
 
-    //order update
+  if (order.status === "FILLED") {
+    const quoteAmount = parseFloat(data.Z);
+    order.avgPrice = quoteAmount / parseFloat(data.z);
+    order.commission = data.n;
+    order.quantity = data.q;
+    const isQuoteCommission = data.N && order.symbol.endsWith(data.N);
+    order.net = isQuoteCommission
+      ? quoteAmount - parseFloat(order.commission)
+      : quoteAmount;
+  } else if (order.status === "REJECTED") order.obs = data.r;
+
+  //order update
 }
 
 function startUserDataMonitor(userId) {

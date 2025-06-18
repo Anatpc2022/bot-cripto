@@ -8,7 +8,12 @@ function bulkInsert(symbols) {
     return symbolModel.bulkCreate(symbols);
 }
 
+function getSymbols(){
+    return symbolModel.findAll();
+}
+
 export default {
     deleteAll,
-    bulkInsert
+    bulkInsert,
+    getSymbols
 }
