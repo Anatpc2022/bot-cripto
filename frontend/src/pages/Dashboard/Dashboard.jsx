@@ -1,4 +1,5 @@
 import Wallet from "../../components/Wallet/Wallet"
+import RiberBotButton from "../RiberBot/RiberBotButton"
 import NewOrderButton from "../Orders/NewOrderButton";
 import TemplatePage from "../TemplatePage";
 import CandleChart from "./CandleChart";
@@ -13,6 +14,7 @@ function Dashboard() {
         </div>
         <div className="btn-toolbar mb-0">
           <NewOrderButton />
+          <RiberBotButton />
         </div>
       </div>
       <CandleChart />
