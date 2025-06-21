@@ -8,9 +8,8 @@ let WSS;
 const LOGS = process.env.APP_EM_LOGS === "true";
 
 async function startTickerMonitor() {
-
   const symbolsMap = {};
-  
+
   const symbolsArray = await symbolsRepository.getSymbols();
   symbolsArray.map((symbolObj) => (symbolsMap[symbolObj.symbol] = true));
 
@@ -42,11 +41,11 @@ async function loadWallet(userId, executeAutomations = true) {
         if (memory === info[item].available) return;
       }
 
-      riberBot.updateMemory(
+      return riberBot.updateMemory(
         item,
         `WALLET_${userId}`,
         null,
-        info[item].available,
+        parseFloat(info[item].available),
         executeAutomations
       );
     })

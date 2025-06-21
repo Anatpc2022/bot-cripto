@@ -14,7 +14,12 @@ export default class RiberBot {
   constructor(automations) {
     this.cache = new Cache();
 
-    //inicializar o cérebro
+    this.BRAIN = {};
+    //inicializar o brain com as automationsAdd commentMore actions
+  }
+
+  getBrain() {
+    return { ...this.BRAIN };
   }
 
   static FIAT_COINS = ["BRL", "EUR", "GBP"];
