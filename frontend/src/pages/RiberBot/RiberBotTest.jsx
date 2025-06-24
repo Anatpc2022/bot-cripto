@@ -1,5 +1,5 @@
 import { useState } from "react";
-
+import MemoryForm from "./MemoryForm";
 import Select from "react-select";
 
 /**
@@ -17,6 +17,10 @@ function RiberBotTest(props) {
     setIndexValue(props.data[evt.value]);
   }
 
+  function btnUpdateClick() {}
+
+  function onIndexValueChange(hasCurrent, evt) {}
+
   const customStyles = {
     control: (provided) => ({
       ...provided,
@@ -27,7 +31,7 @@ function RiberBotTest(props) {
     <>
       {" "}
       <div className="row">
-        <div className="col-4">
+        <div className="row mb-3 pt-3">
           <Select
             value={select}
             styles={customStyles}
@@ -36,6 +40,54 @@ function RiberBotTest(props) {
               return { label: item, value: item };
             })}
           />
+        </div>
+      </div>
+      <div
+        className="mb-3"
+        style={{ overflow: "auto", overflowX: "hidden", maxHeight: 500 }}
+      >
+        <div className="row mb-3">
+          {indexValue && indexValue.previous ? (
+            <div className="col-6">
+              <h1 className="h5 mb-3">Valor Anterior:</h1>
+              <MemoryForm disabled={true} data={props.data[index].previous} />
+            </div>
+          ) : (
+            <></>
+          )}
+          {index ? (
+            <div className="col-6">
+              <h1 className="h5 mb-3">Valor Atual:</h1>
+              {indexValue.current ? (
+                <MemoryForm
+                  id={index}
+                  disabled={false}
+                  data={indexValue.current}
+                  onChange={(evt) => onIndexValueChange(true, evt)}
+                />
+              ) : (
+                <MemoryForm
+                  id={index}
+                  disabled={false}
+                  data={indexValue}
+                  onChange={(evt) => onIndexValueChange(false, evt)}
+                />
+              )}
+            </div>
+          ) : (
+            <></>
+          )}
+        </div>
+      </div>
+      <div className="row mb-3">
+        <div className="col-2">
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={btnUpdateClick}
+          >
+            Atualizar Memória
+          </button>
         </div>
       </div>
     </>
