@@ -17,9 +17,27 @@ function RiberBotTest(props) {
     setIndexValue(props.data[evt.value]);
   }
 
-  function btnUpdateClick() {}
+  function btnUpdateClick() {
+    console.log(indexValue);
+  }
 
-  function onIndexValueChange(hasCurrent, evt) {}
+  function onIndexValueChange(hasCurrent, evt) {
+    const value = /^[\d\.\,]+$/.test(evt.target.value)
+      ? parseFloat(evt.target.value)
+      : evt.target.value;
+    if (!hasCurrent) {
+      if (typeof indexValue === "object")
+        setIndexValue((prevState) => ({
+          ...prevState,
+          [evt.target.id]: value,
+        }));
+      else setIndexValue(value);
+    } else {
+      const currentValue = { ...indexValue.current };
+      currentValue[evt.target.id] = value;
+      setIndexValue({ previous: indexValue.previous, current: currentValue });
+    }
+  }
 
   const customStyles = {
     control: (provided) => ({
