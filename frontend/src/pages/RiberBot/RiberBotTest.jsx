@@ -1,6 +1,7 @@
 import { useState } from "react";
 import MemoryForm from "./MemoryForm";
 import Select from "react-select";
+import { updateMemory } from "../../services/RiberBotService";
 
 /**
  * props:
@@ -18,9 +19,13 @@ function RiberBotTest(props) {
   }
 
   function btnUpdateClick() {
-    console.log(indexValue);
+    updateMemory(index, indexValue.current ? indexValue.current : indexValue)
+      .then((results) => alert("Memoria Atualizada:\n" + JSON.stringify(results)))
+      .catch((err) =>
+        alert(err.response ? JSON.stringify(err.response.data) : err.message)
+      );
   }
-
+  
   function onIndexValueChange(hasCurrent, evt) {
     const value = /^[\d\.\,]+$/.test(evt.target.value)
       ? parseFloat(evt.target.value)

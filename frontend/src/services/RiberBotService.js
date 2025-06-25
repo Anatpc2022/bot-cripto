@@ -13,3 +13,9 @@ export async function getBrain() {
     const response = await axios.get(url);
     return response.data;
 }
+
+export async function updateMemory(index, value) {
+    const url = RIBERBOT_URL + "/memory/" + index;
+    const response = await axios.patch(url, { data: value });
+    return response.data;
+}
