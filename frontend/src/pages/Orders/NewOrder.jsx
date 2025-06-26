@@ -7,9 +7,15 @@ import SelectSide from "../../components/SelectSide";
 import OrderType from "../../components/OrderType";
 
 import { LIMIT_TYPES, STOP_TYPES } from "../../services/ExchangeService";
+import QuantityInput from "../../components/QuantityInput";
 
 function NewOrder() {
-  const [order, setOrder] = useState({ side: "BUY", type: "MARKET" });
+  const [error, setError] = useState("");
+  const [order, setOrder] = useState({
+    side: "BUY",
+    type: "MARKET",
+    isQuote: false,
+  });
 
   function onSymbolChange(evt) {
     setOrder((prevState) => ({ ...prevState, symbol: evt.target.value }));
@@ -28,6 +34,11 @@ function NewOrder() {
 
   function getLimitPriceClasses(orderType) {
     return LIMIT_TYPES.includes(orderType) ? "col-3" : "d-none";
+  }
+
+  function btnSendClick() {
+    setError("");
+    console.log(order);
   }
 
   return (
@@ -64,7 +75,7 @@ function NewOrder() {
       <div className="row mb-3">
         <div className={getStopPriceClasses(order.type)}>
           <div className="form-group">
-            <label htmlFor="stopPrice">Preço de Disparo:</label>
+            <label htmlFor="stopPrice">Stop Price:</label>
             <input
               className="form-control"
               id="stopPrice"
@@ -77,7 +88,7 @@ function NewOrder() {
         </div>
         <div className={getStopPriceClasses(order.type)}>
           <div className="form-group">
-            <label htmlFor="trailingDelta">Distância do Disparo:</label>
+            <label htmlFor="trailingDelta">Trailing Delta:</label>
             <input
               className="form-control"
               id="trailingDelta"
@@ -92,7 +103,7 @@ function NewOrder() {
       <div className="row mb-3">
         <div className={getLimitPriceClasses(order.type)}>
           <div className="form-group">
-            <label htmlFor="limitPrice">Limite de Preço:</label>
+            <label htmlFor="limitPrice">Limit Price:</label>
             <input
               className="form-control"
               id="limitPrice"
@@ -104,8 +115,33 @@ function NewOrder() {
           </div>
         </div>
         <div className="col-3">
-          <input className="form-control" />
+          <QuantityInput
+            symbol={order.symbol}
+            quantity={order.quantity}
+            isQuote={order.isQuote}
+            allowQuote={order.type === "MARKET"}
+            onChange={onInputChange}
+          />
         </div>
+      </div>
+      <div className="row">
+        <div className="col-3">
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={btnSendClick}
+          >
+            Enviar Ordem
+          </button>
+          <a href="/orders" className=" btn btn-light">
+            Cancelar
+          </a>
+        </div>
+        {error ? (
+          <div className="alert alert-danger mt-1 col-6 py-1">{error}</div>
+        ) : (
+          <></>
+        )}
       </div>
     </FormPage>
   );
