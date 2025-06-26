@@ -1,6 +1,11 @@
 import symbolsRepository from "../repositories/symbolsRepository.js";
 import Exchange from "../utils/exchange.js";
 
+async function getSymbols(req, res) {
+    const symbols = await symbolsRepository.getSymbols();
+    res.json(symbols);
+}
+
 async function syncSymbols() {
     const usetBlvt = process.env.BINANCE_BLVT === "true";
     const ignoredCoins = (process.env.IGNORED_COINS || "").split(",");
@@ -35,5 +40,6 @@ async function syncSymbols() {
 }
 
 export default {
-    syncSymbols
+    syncSymbols,
+    getSymbols
 }

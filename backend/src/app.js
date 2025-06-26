@@ -7,6 +7,7 @@ import authMiddleware from "./middlewares/authMiddleware.js";
 import authController from "./controllers/authController.js";
 import exchangeController from "./controllers/exchangeController.js";
 import riberBotRouter from "./routers/riberBotRouter.js";
+import symbolsRouter from "./routers/symbolsRouter.js";
 
 const app = express();
 
@@ -29,6 +30,8 @@ app.use("/exchange/balance", authMiddleware, exchangeController.getBalance);
 app.post("/logout", authController.doLogout);
 
 app.use("/riberBot", authMiddleware, riberBotRouter);
+
+app.use("/symbols", authMiddleware, symbolsRouter);
 
 app.use("/", (req, res, next) => {
   res.send("Hello World!");
