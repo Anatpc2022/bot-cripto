@@ -1,5 +1,6 @@
 import Binance from "node-binance-api";
 import logger from "./logger.js";
+import ordersRepository from "../repositories/ordersRepository.js";
 
 const LOGS = process.env.BINANCE_LOGS === "true";
 const APIKEY = process.env.ACCESS_KEY;
@@ -53,5 +54,19 @@ export default class Exchange {
       },
       () => {}
     );
+  }
+
+  buy(symbol, quantity, price, options) {
+    if (!options || options.type === ordersRepository.orderTypes.MARKET)
+      return this.binance.marketBuy(symbol, quantity, options);
+
+    return this.binance.buy(symbol, quantity, price, options);
+  }
+
+  sell(symbol, quantity, price, options) {
+    if (!options || options.type === ordersRepository.orderTypes.MARKET)
+      return this.binance.marketSell(symbol, quantity, options);
+
+    return this.binance.sell(symbol, quantity, price, options);
   }
 }

@@ -1,51 +1,51 @@
-'use strict';
+"use strict";
 
 /** @type {import('sequelize-cli').Migration} */
 export default {
-  async up (queryInterface, Sequelize) {
+  async up(queryInterface, Sequelize) {
     await queryInterface.createTable("orders", {
       id: {
         type: Sequelize.INTEGER,
         autoIncrement: true,
         allowNull: false,
-        primaryKey: true
+        primaryKey: true,
       },
       userId: {
         type: Sequelize.INTEGER,
         allowNull: false,
         references: {
           model: "users",
-          key: "id"
-        }
+          key: "id",
+        },
       },
       automationId: Sequelize.INTEGER,
       symbol: {
         type: Sequelize.STRING(20),
-        allowNull: false
+        allowNull: false,
       },
       orderId: {
         type: Sequelize.BIGINT,
-        allowNull: false
+        allowNull: false,
       },
       transactTime: {
         type: Sequelize.BIGINT,
-        allowNull: false
+        allowNull: false,
       },
       type: {
         type: Sequelize.STRING(20),
-        allowNull: false
+        allowNull: false,
       },
       side: {
         type: Sequelize.STRING(4),
-        allowNull: false
+        allowNull: false,
       },
       status: {
         type: Sequelize.STRING(20),
-        allowNull: false
+        allowNull: false,
       },
       quantity: {
         type: Sequelize.STRING(20),
-        allowNull: false
+        allowNull: false,
       },
       limitPrice: Sequelize.STRING(20),
       stopPrice: Sequelize.STRING(20),
@@ -55,11 +55,11 @@ export default {
       net: Sequelize.DECIMAL(18, 8),
       obs: Sequelize.STRING,
       createdAt: Sequelize.DATE,
-      updatedAt: Sequelize.DATE
-    })
+      updatedAt: Sequelize.DATE,
+    });
   },
 
-  async down (queryInterface, Sequelize) {
-   await queryInterface.dropTable("orders");
-  }
+  async down(queryInterface, Sequelize) {
+    await queryInterface.dropTable("orders");
+  },
 };
