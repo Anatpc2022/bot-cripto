@@ -1,15 +1,19 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import SelectSymbol from "../../components/SelectSymbol";
 import FormPage from "../FormPage";
 import SymbolInfo from "../../components/SymbolInfo";
 import WalletSummary from "../../components/WalletSummary";
 import SelectSide from "../../components/SelectSide";
 import OrderType from "../../components/OrderType";
+import { placeOrder } from "../../services/OrdersService";
 
 import { LIMIT_TYPES, STOP_TYPES } from "../../services/ExchangeService";
 import QuantityInput from "../../components/QuantityInput";
 
 function NewOrder() {
+  const navigate = useNavigate();
+
   const [error, setError] = useState("");
   const [order, setOrder] = useState({
     side: "BUY",
@@ -38,7 +42,12 @@ function NewOrder() {
 
   function btnSendClick() {
     setError("");
-    console.log(order);
+    placeOrder(order)
+      .then((result) => navigate("/orders"))
+      .catch((err) => {
+        console.error(err);
+        setError(err);
+      });
   }
 
   return (
