@@ -123,6 +123,23 @@ async function updateOrderByOrderId(orderId, newOrder) {
   return updateOrder(order, newOrder);
 }
 
+async function getLastFilledOrders(userId) {
+  const where = {
+    userId,
+    status: orderStatus.FILLED,
+  };
+
+  const idObjects = await orderModel.findAll({
+    where,
+    group: "symbol",
+    attributes: [Sequelize.fn("max", Sequelize.col("id"))],
+    raw: true,
+  });
+
+  const ids = idObjects.map((o) => Object.values(o)).flat();
+  return orderModel.findAll({ where: { id: ids } });
+}
+
 export default {
   orderStatus,
   STOP_TYPES,
@@ -136,4 +153,5 @@ export default {
   getOrder,
   updateOrderById,
   updateOrderByOrderId,
+  getLastFilledOrders,
 };

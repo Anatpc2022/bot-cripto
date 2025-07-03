@@ -22,23 +22,21 @@ function Ticker() {
 
   const [ticker, setTicker] = useState({});
 
-  const { lastJsonMessage } = useWebSocket(
-    import.meta.env.VITE_BWS_URL + "/stream",
-    {
-      onOpen: () => console.log("Connected to Binance WS"),
-      onMessage: () => {
-        if (!lastJsonMessage) return;
-        setTicker((prevState) => ({
-          ...prevState,
-          [lastJsonMessage.data.s]: lastJsonMessage.data,
-        }));
-      },
-      queryParams: { streams },
-      onError: (error) => console.error(error),
-      shouldReconnect: (error) => true,
-      reconnectInterval: 60000,
-    }
-  );
+  useWebSocket(import.meta.env.VITE_BWS_URL + "/stream", {
+    onOpen: () => console.log("Connected to Binance WS"),
+    onMessage: (message) => {
+      if (!message) return;
+      const jsonObj = JSON.parse(message.data);
+      setTicker((prevState) => ({
+        ...prevState,
+        [jsonObj.data.s]: jsonObj.data,
+      }));
+    },
+    queryParams: { streams },
+    onError: (error) => console.error(error),
+    shouldReconnect: (error) => true,
+    reconnectInterval: 60000,
+  });
 
   return (
     <div className="col-12">

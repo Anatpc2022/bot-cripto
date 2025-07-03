@@ -92,7 +92,7 @@ function scheduleOrderUpdate(order, userId) {
         NEW: "Nova",
         PARTIALLY_FILLED: "Parcialmente concluída",
         REJECTED: "Rejeitada",
-        EXPIRED: "Expirada"
+        EXPIRED: "Expirada",
       };
 
       const translatedStatus = statusTranslate[order.status] || order.status;
@@ -179,7 +179,20 @@ async function init(userId, wssInstance) {
 
   startUserDataMonitor(userId);
 
-  //carregar últimas ordens executadas
+  logger("sistema", "Carregando as últimas ordens de Spot...");
+  const lastOrders = await ordersRepository.getLastFilledOrders(userId);
+  const riberBot = RiberBot.getInstance();
+  await Promise.all(
+    lastOrders.map((order) =>
+      riberBot.updateMemory(
+        order.symbol,
+        `LAST_ORDER_${userId}`,
+        null,
+        order.get({ plain: true }),
+        false
+      )
+    )
+  );
 
   //monitoramento de ativos (candles)
 
