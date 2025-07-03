@@ -2,6 +2,7 @@ import RiberBot from "./riberBot.js";
 import Exchange from "./utils/exchange.js";
 import logger from "./utils/logger.js";
 import symbolsRepository from "./repositories/symbolsRepository.js";
+import ordersRepository from "./repositories/ordersRepository.js";
 
 let WSS;
 
@@ -75,6 +76,48 @@ function processBalanceData(userId, data) {
   );
 }
 
+function scheduleOrderUpdate(order, userId) {
+  setTimeout(async () => {
+    try {
+      const updatedOrder = await ordersRepository.updateOrderByOrderId(
+        order.orderId,
+        order
+      );
+      if (!updatedOrder) return;
+
+      // Mapa de tradução de status
+      const statusTranslate = {
+        FILLED: "Concluída",
+        CANCELED: "Cancelada",
+        NEW: "Nova",
+        PARTIALLY_FILLED: "Parcialmente concluída",
+        REJECTED: "Rejeitada",
+        EXPIRED: "Expirada"
+      };
+
+      const translatedStatus = statusTranslate[order.status] || order.status;
+
+      const type = order.status.indexOf("FILLED") !== -1 ? "success" : "error";
+      WSS.broadcast({
+        notification: {
+          text: `Ordem #${updatedOrder.id} foi atualizada como: ${translatedStatus}`,
+          type,
+        },
+      });
+
+      const riberBot = RiberBot.getInstance();
+      riberBot.updateMemory(
+        order.symbol,
+        `LAST_ORDER_${userId}`,
+        null,
+        updatedOrder.get({ plain: true })
+      );
+    } catch (err) {
+      logger("U-" + userId, err);
+    }
+  }, 3000);
+}
+
 async function processExecutionData(userId, data) {
   if (data.x === "NEW") return;
 
@@ -100,7 +143,7 @@ async function processExecutionData(userId, data) {
       : quoteAmount;
   } else if (order.status === "REJECTED") order.obs = data.r;
 
-  //order update
+  scheduleOrderUpdate(order, userId);
 }
 
 function startUserDataMonitor(userId) {
