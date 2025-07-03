@@ -60,13 +60,33 @@ export default class Exchange {
     if (!options || options.type === ordersRepository.orderTypes.MARKET)
       return this.binance.marketBuy(symbol, quantity, options);
 
-    return this.binance.buy(symbol, quantity, price, options);
+    if (options.type === ordersRepository.orderTypes.LIMIT)
+      return this.binance.buy(symbol, quantity, price, options);
+
+    return this.binance.order(
+      options.type,
+      "BUY",
+      symbol,
+      quantity,
+      price,
+      options
+    );
   }
 
   sell(symbol, quantity, price, options) {
     if (!options || options.type === ordersRepository.orderTypes.MARKET)
       return this.binance.marketSell(symbol, quantity, options);
 
-    return this.binance.sell(symbol, quantity, price, options);
+    if (options.type === ordersRepository.orderTypes.LIMIT)
+      return this.binance.sell(symbol, quantity, price, options);
+
+    return this.binance.order(
+      options.type,
+      "SELL",
+      symbol,
+      quantity,
+      price,
+      options
+    );
   }
 }
