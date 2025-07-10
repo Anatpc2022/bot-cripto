@@ -7,6 +7,8 @@ router.get("/:id", ordersController.getOrder);
 
 router.get("/", ordersController.getOrders);
 
+router.post("/:id/sync", ordersController.syncOrder);
+
 router.post("/", ordersController.placeOrder);
 
 export default router;

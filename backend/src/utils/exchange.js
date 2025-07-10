@@ -30,6 +30,14 @@ export default class Exchange {
     return this.binance.balance();
   }
 
+  orderStatus(symbol, orderId) {
+    return this.binance.orderStatus(symbol, orderId);
+  }
+
+  orderTrade(symbol, orderId) {
+    return this.binance.trades(symbol, { orderId });
+  }
+
   tickerStream(callback) {
     this.binance.websockets.prevDay(
       null,

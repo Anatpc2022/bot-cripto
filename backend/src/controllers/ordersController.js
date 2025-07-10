@@ -17,6 +17,52 @@ async function getOrders(req, res) {
   res.json(orders); // { row: [], count: x }
 }
 
+async function syncOrder(req, res) {
+  const userId = res.locals.token.id;
+  const exchange = new Exchange(userId);
+
+  const riberBotOrderId = req.params.id;
+  let order = await ordersRepository.getOrderById(riberBotOrderId, userId);
+  if (!order) return res.sendStatus(404);
+  if (order.userId !== userId) return res.sendStatus(403);
+
+  try {
+    const binanceOrder = await exchange.orderStatus(
+      order.symbol,
+      order.orderId
+    );
+
+    order.status = binanceOrder.status;
+    order.transactTime = binanceOrder.updateTime;
+
+    if (binanceOrder.status === ordersRepository.orderStatus.FILLED) {
+      const binanceTrade = await exchange.orderTrade(
+        order.symbol,
+        order.orderId
+      );
+      const quoteQuantity = parseFloat(binanceOrder.cummulativeQuoteQty);
+
+      order.avgPrice = quoteQuantity / parseFloat(binanceOrder.executedQty);
+      order.commission = binanceTrade.commission || 0;
+      order.quantity = binanceOrder.executedQty;
+      order.obs = "Comissão=" + (binanceTrade.commissionAsset || "");
+
+      const isQuoteCommission =
+        binanceTrade.commissionAsset &&
+        order.symbol.endsWith(binanceTrade.commissionAsset);
+      if (isQuoteCommission)
+        order.net = quoteQuantity - parseFloat(order.commission);
+      else order.net = quoteQuantity;
+    }
+
+    await order.save();
+    res.json(order.get({ plain: true }));
+  } catch (err) {
+    logger("U-" + userId, err.body ? JSON.stringify(err.body) : err.message);
+    return res.status(400).json(err.body ? err.body : err.message);
+  }
+}
+
 async function placeOrder(req, res) {
   const userId = res.locals.token.id;
   const exchange = new Exchange(userId);
@@ -57,4 +103,5 @@ export default {
   getOrder,
   getOrders,
   placeOrder,
+  syncOrder,
 };
