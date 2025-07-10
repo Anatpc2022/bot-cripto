@@ -6,6 +6,7 @@ import { ORDER_STATUS } from "../../services/ExchangeService";
  */
 export default function OrderRow(props) {
   function getDate(timestamp) {
+    if(!timestamp) return "";
     const date = new Date(Number(timestamp));
     return new Intl.DateTimeFormat("en-GB", {
       dateStyle: "short",
