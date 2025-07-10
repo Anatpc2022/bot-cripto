@@ -1,16 +1,43 @@
 import OrderRow from "./OrderRow";
 import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { getOrders } from "../../services/OrdersService";
+import Pagination from "../../components/Pagination";
 
 export default function OrdersTable() {
+  const defaultLocation = useLocation();
   const [orders, setOrders] = useState([]);
+  const [page, setPage] = useState(getPage());
+  const [count, setCount] = useState(0);
+  const [message, setMessage] = useState("");
+
+  function getPage(location) {
+    if (!location) location = defaultLocation;
+    return new URLSearchParams(location.search).get("page");
+  }
 
   useEffect(() => {
-    getOrders()
+    setPage(getPage(defaultLocation));
+  }, [defaultLocation]);
+
+  useEffect(() => {
+    setPage(getPage(defaultLocation));
+  }, [defaultLocation]);
+
+  useEffect(() => {
+    setMessage("Carregando Ordens...");
+    getOrders(page || 1)
       .then((result) => {
         setOrders(result.rows);
+        setCount(result.count);
+        setMessage("");
       })
-      .catch((err) => console.error(err));
+      .catch((err) => {
+        console.error(err.response ? err.response.data : err);
+        setMessage(
+          err.response ? JSON.stringify(err.response.data) : err.message
+        );
+      });
   }, []);
 
   return (
@@ -27,15 +54,16 @@ export default function OrdersTable() {
           </tr>
         </thead>
         <tbody>
-          {orders ? (
+          {!message ? (
             orders.map((order) => <OrderRow key={order.id} data={order} />)
           ) : (
             <tr>
-              <td colSpan={6}>No orders found.</td>
+              <td colSpan={6}>{message}</td>
             </tr>
           )}
         </tbody>
       </table>
+      <Pagination count={count} />
     </div>
   );
 }
