@@ -2,6 +2,14 @@ import axios from "./BaseService";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
+export const ORDER_STATUS = {
+  PARTIALLY_FILLED: "PARTIALLY_FILLED",
+  FILLED: "FILLED",
+  REJECTED: "REJECTED",
+  EXPIRED: "EXPIRED",
+  CANCELED: "CANCELED",
+};
+
 export const ORDER_TYPES = {
   MARKET: "MARKET",
   LIMIT: "LIMIT",
