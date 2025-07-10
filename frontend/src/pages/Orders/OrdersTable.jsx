@@ -38,7 +38,7 @@ export default function OrdersTable() {
           err.response ? JSON.stringify(err.response.data) : err.message
         );
       });
-  }, []);
+  }, [page]);
 
   return (
     <div className="card card-body border-0 shadow table-wrapper table-responsive">
