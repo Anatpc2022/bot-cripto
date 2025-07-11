@@ -17,6 +17,24 @@ async function getOrders(req, res) {
   res.json(orders); // { row: [], count: x }
 }
 
+async function cancelOrder(req, res) {
+  const userId = res.locals.token.id;
+  const { symbol, orderId } = req.params;
+
+  const exchange = new Exchange(userId);
+
+  try {
+    const result = await exchange.cancel(symbol, orderId);
+    const order = await ordersRepository.updateOrderByOrderId(result.orderId, {
+      status: result.status,
+    });
+    res.json(order.get({ plain: true }));
+  } catch (err) {
+    logger("U-" + userId, err.body ? JSON.stringify(err.body) : err.message);
+    return res.status(400).json(err.body ? err.body : err.message);
+  }
+}
+
 async function syncOrder(req, res) {
   const userId = res.locals.token.id;
   const exchange = new Exchange(userId);
@@ -104,4 +122,5 @@ export default {
   getOrders,
   placeOrder,
   syncOrder,
+  cancelOrder,
 };

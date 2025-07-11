@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import FormPage from "../FormPage";
-import { getOrder } from "../../services/OrdersService";
+import { cancelOrder, getOrder, syncOrder } from "../../services/OrdersService";
 import { ORDER_STATUS, FINISHED_STATUS } from "../../services/ExchangeService";
 
 const translations = {
@@ -74,9 +74,27 @@ function ViewOrder() {
     }).format(date);
   }
 
-  function btnSyncClick() {}
+  function btnSyncClick() {
+    syncOrder(order.id)
+      .then((result) => setOrder(result))
+      .catch((err) => {
+        console.error(err.response ? err.response.data : err);
+        setError(
+          err.response ? JSON.stringify(err.response.data) : err.message
+        );
+      });
+  }
 
-  function btnCancelClick() {}
+  function btnCancelClick() {
+    cancelOrder(order.symbol, order.orderId)
+      .then((result) => setOrder(result))
+      .catch((err) => {
+        console.error(err.response ? err.response.data : err);
+        setError(
+          err.response ? JSON.stringify(err.response.data) : err.message
+        );
+      });
+  }
 
   return (
     <FormPage title="Detalhes da Ordem">

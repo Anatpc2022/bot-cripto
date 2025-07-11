@@ -30,6 +30,10 @@ export default class Exchange {
     return this.binance.balance();
   }
 
+  cancel(symbol, orderId) {
+    return this.binance.cancel(symbol, orderId);
+  }
+
   orderStatus(symbol, orderId) {
     return this.binance.orderStatus(symbol, orderId);
   }
