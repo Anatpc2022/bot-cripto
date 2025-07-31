@@ -1,4 +1,4 @@
-import monitorModel from "../models/monitorModel";
+import monitorModel from "../models/monitorModel.js";
 
 const monitorTypes = {
   CANDLES: "CANDLES",
