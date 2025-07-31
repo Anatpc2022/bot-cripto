@@ -3,6 +3,7 @@ import Exchange from "./utils/exchange.js";
 import logger from "./utils/logger.js";
 import symbolsRepository from "./repositories/symbolsRepository.js";
 import ordersRepository from "./repositories/ordersRepository.js";
+import monitorsRepository from "./repositories/monitorsRepository.js";
 
 let WSS;
 
@@ -194,7 +195,14 @@ async function init(userId, wssInstance) {
     )
   );
 
-  //monitoramento de ativos (candles)
+  const userMonitors = await monitorsRepository.getActiveUserMonitors(userId);
+  userMonitors
+    .filter((m) => m.type === monitorsRepository.monitorTypes.CANDLES)
+    .map((m) =>
+      setTimeout(() => {
+        // inicializar a stream de candles
+      }, 250)
+    );
 
   logger("sistema", "O App Exchange Monitor foi iniciado!");
 }

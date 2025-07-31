@@ -11,7 +11,7 @@ async function getMonitor(req, res) {
 
 async function getMonitors(req, res) {
   const userId = res.locals.token.id;
-  const page = req.query.page;
+  const page = parseInt(req.query.page || 1);
 
   const monitors = await monitorsRepository.getMonitors(userId, page);
   return res.json(monitors);
@@ -44,6 +44,7 @@ async function updateMonitor(req, res) {
   newMonitor.userId = userId;
 
   const currentMonitor = await monitorsRepository.getMonitor(id);
+  if (!currentMonitor) return res.sendStatus(404);
   if (currentMonitor.userId !== userId) return res.sendStatus(403);
 
   const monitor = await monitorsRepository.updateMonitor(id, newMonitor);
@@ -59,6 +60,7 @@ async function deleteMonitor(req, res) {
   const id = req.params.id;
 
   const currentMonitor = await monitorsRepository.getMonitor(id);
+  if (!currentMonitor) return res.sendStatus(404);
   if (currentMonitor.userId !== userId) return res.sendStatus(403);
 
   //se ativo, desativa o monitor no exchange monitor
@@ -72,6 +74,7 @@ async function startMonitor(req, res) {
   const id = req.params.id;
 
   const currentMonitor = await monitorsRepository.getMonitor(id);
+  if (!currentMonitor) return res.sendStatus(404);
   if (currentMonitor.isActive) return res.sendStatus(204);
   if (currentMonitor.userId !== userId) return res.sendStatus(403);
 
@@ -87,6 +90,7 @@ async function stopMonitor(req, res) {
   const id = req.params.id;
 
   const currentMonitor = await monitorsRepository.getMonitor(id);
+  if (!currentMonitor) return res.sendStatus(404);
   if (!currentMonitor.isActive) return res.sendStatus(204);
   if (currentMonitor.userId !== userId) return res.sendStatus(403);
 
