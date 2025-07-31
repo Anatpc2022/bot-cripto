@@ -68,6 +68,30 @@ export default class Exchange {
     );
   }
 
+  chartStream(symbol, interval, callback) {
+    const streamUrl = this.binance.websockets.chart(
+      symbol,
+      interval,
+      (symbol, interval, chart) => {
+        const ohlc = this.binance.populateOHLC(chart);
+        callback(ohlc);
+      }
+    );
+    if (LOGS)
+      logger("U-" + this.userId, `Chart Stream connected at ${streamUrl}`);
+  }
+
+  terminateChartStream(symbol, interval) {
+    this.binance.websockets.terminate(
+      `${symbol.toLowerCase()}@kline_${interval}`
+    );
+    if (LOGS)
+      logger(
+        "U-" + this.userId,
+        `Chart Stream terminated at ${symbol.toLowerCase()}@kline_${interval}`
+      );
+  }
+
   buy(symbol, quantity, price, options) {
     if (!options || options.type === ordersRepository.orderTypes.MARKET)
       return this.binance.marketBuy(symbol, quantity, options);

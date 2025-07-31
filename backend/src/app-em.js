@@ -173,6 +173,20 @@ function startUserDataMonitor(userId) {
   }
 }
 
+function startChartMonitor(monitor) {
+  if (!monitor.symbol)
+    throw new Error("Can't start a Chart Monitor without a symbol!");
+
+  new Exchange(monitor.userId).chartStream(
+    monitor.symbol,
+    monitor.interval || "1m",
+    async (ohlc) => {
+      console.log(ohlc);
+      //processar as velas recebidas
+    }
+  );
+}
+
 async function init(userId, wssInstance) {
   WSS = wssInstance;
 
@@ -198,11 +212,7 @@ async function init(userId, wssInstance) {
   const userMonitors = await monitorsRepository.getActiveUserMonitors(userId);
   userMonitors
     .filter((m) => m.type === monitorsRepository.monitorTypes.CANDLES)
-    .map((m) =>
-      setTimeout(() => {
-        // inicializar a stream de candles
-      }, 250)
-    );
+    .map((monitor) => setTimeout(() => startChartMonitor(monitor), 250));
 
   logger("sistema", "O App Exchange Monitor foi iniciado!");
 }
