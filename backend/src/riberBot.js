@@ -1,5 +1,6 @@
 import Cache from "./utils/cache.js";
 import logger from "./utils/logger.js";
+import indexes from "./utils/indexes.js";
 
 const LOGS = process.env.RIBERBOT_LOGS === "true";
 
@@ -29,14 +30,14 @@ export default class RiberBot {
   async getStableConversion(baseAsset, quoteAsset, baseQty) {
     if (RiberBot.DOLLAR_COINS.includes(baseAsset)) return baseQty;
 
-    const ticker = await this.getMemory(baseAsset + quoteAsset, "TICKER");
+    const ticker = await this.getMemory(baseAsset + quoteAsset, indexes.indexKeys.TICKER);
     if (ticker && ticker.current)
       return parseFloat(baseQty) * ticker.current.close;
     return 0;
   }
 
   async getFiatConversion(stablecoin, fiatCoin, fiatQty) {
-    const ticker = await this.getMemory(stablecoin + fiatCoin, "TICKER");
+    const ticker = await this.getMemory(stablecoin + fiatCoin, indexes.indexKeys.TICKER);
     if (ticker && ticker.current)
       return parseFloat(fiatQty) / ticker.current.close;
     return 0;
@@ -67,10 +68,10 @@ export default class RiberBot {
     const usd = this.tryUsdConversion(baseAsset, baseQty);
     if (fiat === "USD" || !fiat) return usd;
 
-    let ticker = await this.getMemory("USDT" + fiat, "TICKER");
+    let ticker = await this.getMemory("USDT" + fiat, indexes.indexKeys.TICKER);
     if (ticker && ticker.current) return usd * ticker.current.close;
 
-    ticker = await this.getMemory(fiat + "USDT", "TICKER");
+    ticker = await this.getMemory(fiat + "USDT", indexes.indexKeys.TICKER);
     if (ticker && ticker.current) return usd / ticker.current.close;
 
     return usd;
@@ -149,7 +150,7 @@ export default class RiberBot {
     if (value.toJSON) value = value.toJSON();
     if (value.get) value = value.get({ plain: true });
 
-    if (index === "TICKER")
+    if (index === indexes.indexKeys.TICKER)
       return this.updateTickerMemory(symbol, index, value, executeAutomations);
     else
       return this.setCache(symbol, index, interval, value, executeAutomations);

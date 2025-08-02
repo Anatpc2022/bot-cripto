@@ -4,8 +4,10 @@ import logger from "./utils/logger.js";
 import symbolsRepository from "./repositories/symbolsRepository.js";
 import ordersRepository from "./repositories/ordersRepository.js";
 import monitorsRepository from "./repositories/monitorsRepository.js";
+import indexes from "./utils/indexes.js";
 
 let WSS;
+let exchange;
 
 const LOGS = process.env.APP_EM_LOGS === "true";
 
@@ -15,7 +17,7 @@ async function startTickerMonitor() {
   const symbolsArray = await symbolsRepository.getSymbols();
   symbolsArray.map((symbolObj) => (symbolsMap[symbolObj.symbol] = true));
 
-  new Exchange().tickerStream(async (markets) => {
+  exchange.tickerStream(async (markets) => {
     const riberBot = RiberBot.getInstance();
     let results = await Promise.all(
       markets.map((mkt) => {
@@ -32,8 +34,6 @@ async function startTickerMonitor() {
 }
 
 async function loadWallet(userId, executeAutomations = true) {
-  const exchange = new Exchange();
-
   const info = await exchange.balance();
   const riberBot = RiberBot.getInstance();
   let results = await Promise.all(
@@ -157,7 +157,6 @@ function startUserDataMonitor(userId) {
       )
     );
 
-    const exchange = new Exchange(userId);
     exchange.userDataStream(
       (data) => processBalanceData(userId, data),
       (data) => processExecutionData(userId, data)
@@ -177,10 +176,69 @@ function startChartMonitor(monitor) {
   if (!monitor.symbol)
     throw new Error("Can't start a Chart Monitor without a symbol!");
 
-  new Exchange(monitor.userId).chartStream(
+  exchange.chartStream(
     monitor.symbol,
     monitor.interval || "1m",
     async (ohlc) => {
+      const lastCandle = {
+        open: ohlc.open[ohlc.open.length - 1],
+        close: ohlc.close[ohlc.close.length - 1],
+        high: ohlc.high[ohlc.high.length - 1],
+        low: ohlc.low[ohlc.low.length - 1],
+        volume: ohlc.volume[ohlc.volume.length - 1],
+      };
+
+      const previousCandle = {
+        open: ohlc.open[ohlc.open.length - 2],
+        close: ohlc.close[ohlc.close.length - 2],
+        high: ohlc.high[ohlc.high.length - 2],
+        low: ohlc.low[ohlc.low.length - 2],
+        volume: ohlc.volume[ohlc.volume.length - 2],
+      };
+
+      const previousPreviousCandle = {
+        open: ohlc.open[ohlc.open.length - 3],
+        close: ohlc.close[ohlc.close.length - 3],
+        high: ohlc.high[ohlc.high.length - 3],
+        low: ohlc.low[ohlc.low.length - 3],
+        volume: ohlc.volume[ohlc.volume.length - 3],
+      };
+
+      if (monitor.logs) logger("M-" + monitor.id, JSON.stringify(lastCandle));
+
+      try {
+        const riberBot = RiberBot.getInstance();
+        let results = await riberBot.updateMemory(
+          monitor.symbol,
+          indexes.indexKeys.PREVIOUS_CANDLE,
+          monitor.interval,
+          {
+            current: previousCandle,
+            previous: previousPreviousCandle,
+          }
+        );
+        if (results && results.length)
+          results
+            .filter((r) => r)
+            .map((r) => WSS.broadcast({ notification: r }));
+
+        results = await riberBot.updateMemory(
+          monitor.symbol,
+          indexes.indexKeys.LAST_CANDLE,
+          monitor.interval,
+          {
+            current: lastCandle,
+            previous: previousCandle,
+          }
+        );
+        if (results && results.length)
+          results
+            .filter((r) => r)
+            .map((r) => WSS.broadcast({ notification: r }));
+      } catch (err) {
+        logger("M-" + monitor.id, err);
+      }
+
       console.log(ohlc);
       //processar as velas recebidas
     }
@@ -189,6 +247,8 @@ function startChartMonitor(monitor) {
 
 async function init(userId, wssInstance) {
   WSS = wssInstance;
+
+  exchange = new Exchange(userId);
 
   startTickerMonitor();
 
