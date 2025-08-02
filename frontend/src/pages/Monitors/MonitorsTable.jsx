@@ -1,7 +1,12 @@
 import MonitorRow from "./MonitorRow";
 import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import { getMonitors } from "../../services/MonitorsService";
+import {
+  getMonitors,
+  startMonitor,
+  stopMonitor,
+  deleteMonitor,
+} from "../../services/MonitorsService";
 import Pagination from "../../components/Pagination";
 
 export default function MonitorsTable() {
@@ -36,6 +41,48 @@ export default function MonitorsTable() {
         );
       });
   }, [page]);
+
+  function onStopClick(event) {
+    const id = event.target.id.replace("stop", "");
+    stopMonitor(id)
+      .then((monitor) => {
+        window.location.reload();
+      })
+      .catch((err) => {
+        console.error(err.response ? err.response.data : err);
+        setMessage(
+          err.response ? JSON.stringify(err.response.data) : err.message
+        );
+      });
+  }
+
+  function onStartClick(event) {
+    const id = event.target.id.replace("start", "");
+    startMonitor(id)
+      .then((monitor) => {
+        window.location.reload();
+      })
+      .catch((err) => {
+        console.error(err.response ? err.response.data : err);
+        setMessage(
+          err.response ? JSON.stringify(err.response.data) : err.message
+        );
+      });
+  }
+
+  function onDeleteClick(event) {
+    const id = event.target.id.replace("delete", "");
+    deleteMonitor(id)
+      .then((monitor) => {
+        window.location.reload();
+      })
+      .catch((err) => {
+        console.error(err.response ? err.response.data : err);
+        setMessage(
+          err.response ? JSON.stringify(err.response.data) : err.message
+        );
+      });
+  }
 
   return (
     <div className="card card-body border-0 shadow table-wrapper table-responsive">
@@ -73,7 +120,13 @@ export default function MonitorsTable() {
           )}
           {!message ? (
             monitors.map((monitor) => (
-              <MonitorRow key={monitor.id} data={monitor} />
+              <MonitorRow
+                key={monitor.id}
+                data={monitor}
+                onStopClick={onStopClick}
+                onStartClick={onStartClick}
+                onDeleteClick={onDeleteClick}
+              />
             ))
           ) : (
             <tr>

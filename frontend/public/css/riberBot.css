@@ -1,3 +1,7 @@
+svg {
+    pointer-events: none;
+}
+
 .cardDark {
     background-color: #363c4e;
 }
