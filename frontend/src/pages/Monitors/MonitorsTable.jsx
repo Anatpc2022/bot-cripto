@@ -1,7 +1,7 @@
-//import OrderRow from "./OrderRow";
+import MonitorRow from "./MonitorRow";
 import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
-//import { getOrders } from "../../services/OrdersService";
+import { getMonitors } from "../../services/MonitorsService";
 import Pagination from "../../components/Pagination";
 
 export default function MonitorsTable() {
@@ -23,16 +23,18 @@ export default function MonitorsTable() {
 
   useEffect(() => {
     setMessage("Carregando Monitores...");
-    // getOrders(page || 1)
-    //     .then(result => {
-    //         setMonitors(result.rows);
-    //         setCount(result.count);
-    //         setMessage("");
-    //     })
-    //     .catch(err => {
-    //         console.error(err.response ? err.response.data : err);
-    //         setMessage(err.response ? JSON.stringify(err.response.data) : err.message);
-    //     });
+    getMonitors(page || 1)
+      .then((result) => {
+        setMonitors(result.rows);
+        setCount(result.count + 2);
+        setMessage("");
+      })
+      .catch((err) => {
+        console.error(err.response ? err.response.data : err);
+        setMessage(
+          err.response ? JSON.stringify(err.response.data) : err.message
+        );
+      });
   }, [page]);
 
   return (
@@ -42,7 +44,7 @@ export default function MonitorsTable() {
           <tr>
             <th className="border-gray-200">Tipo</th>
             <th className="border-gray-200">Par/Moeda</th>
-            <th className="border-gray-200">Ativar</th>
+            <th className="border-gray-200">Status</th>
             <th className="border-gray-200">Ações</th>
           </tr>
         </thead>
@@ -70,7 +72,9 @@ export default function MonitorsTable() {
             <></>
           )}
           {!message ? (
-            monitors.map((monitor) => <div>{JSON.stringify(monitor)}</div>)
+            monitors.map((monitor) => (
+              <MonitorRow key={monitor.id} data={monitor} />
+            ))
           ) : (
             <tr>
               <td colSpan={4}>{message}</td>
