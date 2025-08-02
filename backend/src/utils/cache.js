@@ -13,6 +13,10 @@ export default class Cache {
     this.MEMORY[key] = value;
   }
 
+  unset(key) {
+    return (this.MEMORY[key] = undefined);
+  }
+
   async search(pattern) {
     if (!pattern) return { ...this.MEMORY };
 

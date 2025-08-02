@@ -30,14 +30,20 @@ export default class RiberBot {
   async getStableConversion(baseAsset, quoteAsset, baseQty) {
     if (RiberBot.DOLLAR_COINS.includes(baseAsset)) return baseQty;
 
-    const ticker = await this.getMemory(baseAsset + quoteAsset, indexes.indexKeys.TICKER);
+    const ticker = await this.getMemory(
+      baseAsset + quoteAsset,
+      indexes.indexKeys.TICKER
+    );
     if (ticker && ticker.current)
       return parseFloat(baseQty) * ticker.current.close;
     return 0;
   }
 
   async getFiatConversion(stablecoin, fiatCoin, fiatQty) {
-    const ticker = await this.getMemory(stablecoin + fiatCoin, indexes.indexKeys.TICKER);
+    const ticker = await this.getMemory(
+      stablecoin + fiatCoin,
+      indexes.indexKeys.TICKER
+    );
     if (ticker && ticker.current)
       return parseFloat(fiatQty) / ticker.current.close;
     return 0;
@@ -154,5 +160,10 @@ export default class RiberBot {
       return this.updateTickerMemory(symbol, index, value, executeAutomations);
     else
       return this.setCache(symbol, index, interval, value, executeAutomations);
+  }
+
+  deleteMemory(symbol, index, interval) {
+    const memoryKey = this.buildMemoryKey(symbol, index, interval);
+    return this.cache.unset(memoryKey);
   }
 }

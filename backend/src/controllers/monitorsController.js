@@ -1,4 +1,5 @@
 import monitorsRepository from "../repositories/monitorsRepository.js";
+import appEm from "../app-em.js";
 
 async function getMonitor(req, res) {
   const userId = res.locals.token.id;
@@ -32,7 +33,7 @@ async function insertMonitor(req, res) {
 
   const monitor = await monitorsRepository.insertMonitor(newMonitor);
 
-  //se ativo, inicializa no exchange monitor
+  if (monitor.isActive) appEm.startChartMonitor(monitor);
 
   res.status(201).json(monitor.get({ plain: true }));
 }
@@ -48,9 +49,9 @@ async function updateMonitor(req, res) {
   if (currentMonitor.userId !== userId) return res.sendStatus(403);
 
   const monitor = await monitorsRepository.updateMonitor(id, newMonitor);
-  //desativa o monitor
+  appEm.stopChartMonitor(currentMonitor);
 
-  //se ativo, inicializa no exchange monitor
+  if (monitor.isActive) appEm.startChartMonitor(monitor);
 
   res.json(monitor.get({ plain: true }));
 }
@@ -63,7 +64,7 @@ async function deleteMonitor(req, res) {
   if (!currentMonitor) return res.sendStatus(404);
   if (currentMonitor.userId !== userId) return res.sendStatus(403);
 
-  //se ativo, desativa o monitor no exchange monitor
+  if (currentMonitor.isActive) appEm.stopChartMonitor(currentMonitor);
 
   await monitorsRepository.deleteMonitor(id);
   res.sendStatus(204);
@@ -78,7 +79,7 @@ async function startMonitor(req, res) {
   if (currentMonitor.isActive) return res.sendStatus(204);
   if (currentMonitor.userId !== userId) return res.sendStatus(403);
 
-  //inicializa no exchange monitor
+  appEm.startChartMonitor(currentMonitor);
   currentMonitor.isActive = true;
   await currentMonitor.save();
 
@@ -94,7 +95,7 @@ async function stopMonitor(req, res) {
   if (!currentMonitor.isActive) return res.sendStatus(204);
   if (currentMonitor.userId !== userId) return res.sendStatus(403);
 
-  //desativa no exchange monitor
+  appEm.stopChartMonitor(currentMonitor);
   currentMonitor.isActive = false;
   await currentMonitor.save();
 

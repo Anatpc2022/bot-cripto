@@ -172,6 +172,21 @@ function startUserDataMonitor(userId) {
   }
 }
 
+async function processChartData(monitor, ohlc) {
+  const indexes = monitor.indexes
+    ? monitor.indexes.split(",").filter((ix) => ix)
+    : [];
+  if (indexes.length === 0) return false;
+
+  const calculatedIndexes = {};
+  indexes.forEach((index) => {
+    //calcular o indicador técnico
+    console.log(index);
+  });
+
+  //atualiza a memória do RiberBot com os indicadores calculados
+}
+
 function startChartMonitor(monitor) {
   if (!monitor.symbol)
     throw new Error("Can't start a Chart Monitor without a symbol!");
@@ -235,13 +250,42 @@ function startChartMonitor(monitor) {
           results
             .filter((r) => r)
             .map((r) => WSS.broadcast({ notification: r }));
+
+        processChartData(monitor, ohlc);
       } catch (err) {
         logger("M-" + monitor.id, err);
       }
-
-      console.log(ohlc);
-      //processar as velas recebidas
     }
+  );
+}
+
+function stopChartMonitor(monitor) {
+  if (!monitor.symbol)
+    throw new Error("Can't stop a chart monitor without a symbol");
+  exchange.terminateChartStream(monitor.symbol, monitor.interval);
+  if (monitor.logs)
+    logger(
+      "M-" + monitor.id,
+      `Chart monitor ${monitor.symbol}_${monitor.interval} stopped!`
+    );
+
+  const riberBot = RiberBot.getInstance();
+  riberBot.deleteMemory(
+    monitor.symbol,
+    indexes.indexKeys.LAST_CANDLE,
+    monitor.interval
+  );
+  riberBot.deleteMemory(
+    monitor.symbol,
+    indexes.indexKeys.PREVIOUS_CANDLE,
+    monitor.interval
+  );
+
+  const monitorIndexes = monitor.indexes
+    ? monitor.indexes.split(",").filter((ix) => ix)
+    : [];
+  monitorIndexes.map((ix) =>
+    riberBot.deleteMemory(monitor.symbol, ix, monitor.interval)
   );
 }
 
@@ -279,4 +323,6 @@ async function init(userId, wssInstance) {
 
 export default {
   init,
+  startChartMonitor,
+  stopChartMonitor,
 };

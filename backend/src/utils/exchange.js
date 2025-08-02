@@ -82,9 +82,8 @@ export default class Exchange {
   }
 
   terminateChartStream(symbol, interval) {
-    this.binance.websockets.terminate(
-      `${symbol.toLowerCase()}@kline_${interval}`
-    );
+    const streamUrl = `${this.binance.getStreamUrl()}${symbol.toLowerCase()}@kline_${interval}`;
+    this.binance.websockets.terminate(streamUrl);
     if (LOGS)
       logger(
         "U-" + this.userId,
