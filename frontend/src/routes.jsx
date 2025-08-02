@@ -5,6 +5,7 @@ import Orders from "./pages/Orders/Orders";
 import RiberBot from "./pages/RiberBot/RiberBot";
 import NewOrder from "./pages/Orders/NewOrder";
 import ViewOrder from "./pages/Orders/ViewOrder";
+import Monitors from "./pages/Monitors/Monitors";
 
 function Router() {
   function PrivateRoute({ children }) {
@@ -45,6 +46,14 @@ function Router() {
           element={
             <PrivateRoute>
               <Orders />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/monitors"
+          element={
+            <PrivateRoute>
+              <Monitors />
             </PrivateRoute>
           }
         />
