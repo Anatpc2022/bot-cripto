@@ -281,10 +281,10 @@ function stopChartMonitor(monitor) {
     monitor.interval
   );
 
-  const monitorIndexes = monitor.indexes
+  const indicators = monitor.indexes
     ? monitor.indexes.split(",").filter((ix) => ix)
     : [];
-  monitorIndexes.map((ix) =>
+  indicators.map((ix) =>
     riberBot.deleteMemory(monitor.symbol, ix, monitor.interval)
   );
 }
