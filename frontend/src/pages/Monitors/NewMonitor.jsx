@@ -3,6 +3,8 @@ import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { getMonitor } from "../../services/MonitorsService";
 import SelectSymbol from "../../components/SelectSymbol";
+import SelectInterval from "./SelectInterval";
+import SwitchInput from "../../components/SwitchInput";
 
 export default function NewMonitor() {
   const { id } = useParams();
@@ -42,7 +44,36 @@ export default function NewMonitor() {
             />
           </div>
         </div>
+        <div className="col-3">
+          <SelectInterval
+            onChange={onInputChange}
+            interval={monitor.interval}
+          />
+        </div>
       </div>
+      <div className="row mb-3">
+        <div className="col-3">
+          <div className="form-group">
+            <SwitchInput
+              id="isActive"
+              text="Está Ativo?"
+              onChange={onInputChange}
+              isChecked={monitor.isActive}
+            />
+          </div>
+        </div>
+        <div className="col-3">
+          <div className="form-group">
+            <SwitchInput
+              id="logs"
+              text="Habilitar Logs?"
+              onChange={onInputChange}
+              isChecked={monitor.logs}
+            />
+          </div>
+        </div>
+      </div>
+      {JSON.stringify(monitor)}
     </FormPage>
   );
 }
