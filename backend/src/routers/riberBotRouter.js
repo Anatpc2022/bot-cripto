@@ -9,4 +9,6 @@ router.get("/memory", riberBotController.getMemory);
 
 router.get("/brain", riberBotController.getBrain);
 
+router.get("/analysis", riberBotController.getAnalysisIndexes);
+
 export default router;
