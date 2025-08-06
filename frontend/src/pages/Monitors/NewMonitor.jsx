@@ -1,15 +1,21 @@
 import FormPage from "../FormPage";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { getMonitor } from "../../services/MonitorsService";
+import { getMonitor, saveMonitor } from "../../services/MonitorsService";
 import SelectSymbol from "../../components/SelectSymbol";
 import SelectInterval from "./SelectInterval";
 import SwitchInput from "../../components/SwitchInput";
+import MonitorIndex from "./MonitorIndex";
 
 export default function NewMonitor() {
+  const navigate = useNavigate();
+
   const { id } = useParams();
 
-  const [monitor, setMonitor] = useState({});
+  const [monitor, setMonitor] = useState({
+    type: "CANDLES",
+    indexes: "",
+  });
   const [message, setMessage] = useState("");
 
   useEffect(() => {
@@ -31,6 +37,17 @@ export default function NewMonitor() {
     }));
   }
 
+  function btnSaveClick() {
+    saveMonitor(monitor.id, monitor)
+      .then((result) => navigate("/monitors"))
+      .catch((err) => {
+        console.error(err.response ? err.response.data : err);
+        setMessage(
+          err.response ? JSON.stringify(err.response.data) : err.message
+        );
+      });
+  }
+
   return (
     <FormPage title={`${id ? "Editar" : "Novo"} Monitor de Vela`}>
       <div className="row mb-3">
@@ -49,6 +66,11 @@ export default function NewMonitor() {
             onChange={onInputChange}
             interval={monitor.interval}
           />
+        </div>
+      </div>
+      <div className="row mb-3">
+        <div className="col-6">
+          <MonitorIndex onChange={onInputChange} indexes={monitor.indexes} />
         </div>
       </div>
       <div className="row mb-3">
@@ -73,7 +95,25 @@ export default function NewMonitor() {
           </div>
         </div>
       </div>
-      {JSON.stringify(monitor)}
+      <div className="row">
+        <div className="col-3">
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={btnSaveClick}
+          >
+            Salvar Monitor
+          </button>
+          <a href="/monitors" className="btn btn-light">
+            Cancelar
+          </a>
+        </div>
+        {message ? (
+          <div className="alert alert-danger mt-1 col-9 py-1">{message}</div>
+        ) : (
+          <></>
+        )}
+      </div>
     </FormPage>
   );
 }
