@@ -1,3 +1,5 @@
+import technicalindicators from "technicalindicators";
+
 const indexKeys = {
   WALLET: "WALLET",
   LAST_ORDER: "LAST_ORDER",
