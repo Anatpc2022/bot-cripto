@@ -6,6 +6,7 @@ import RiberBot from "./pages/RiberBot/RiberBot";
 import NewOrder from "./pages/Orders/NewOrder";
 import ViewOrder from "./pages/Orders/ViewOrder";
 import Monitors from "./pages/Monitors/Monitors";
+import NewMonitor from "./pages/Monitors/NewMonitor";
 
 function Router() {
   function PrivateRoute({ children }) {
@@ -46,6 +47,22 @@ function Router() {
           element={
             <PrivateRoute>
               <Orders />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/monitors/edit/:id"
+          element={
+            <PrivateRoute>
+              <NewMonitor />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/monitors/new"
+          element={
+            <PrivateRoute>
+              <NewMonitor />
             </PrivateRoute>
           }
         />
