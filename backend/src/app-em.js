@@ -173,18 +173,47 @@ function startUserDataMonitor(userId) {
 }
 
 async function processChartData(monitor, ohlc) {
-  const indexes = monitor.indexes
+  const monitorIndexes = monitor.indexes
     ? monitor.indexes.split(",").filter((ix) => ix)
     : [];
-  if (indexes.length === 0) return false;
+  if (monitorIndexes.length === 0) return false;
 
   const calculatedIndexes = {};
-  indexes.forEach((index) => {
-    //calcular o indicador técnico
-    console.log(index);
+  let executeAutomations = false;
+
+  monitorIndexes.forEach((index) => {
+    const params = index.split("_"); //RSI_14
+    const indexName = params[0];
+    params.splice(0, 1);
+
+    try {
+      const calc = indexes.execCalc(indexName, ohlc, ...params);
+      if (monitor.logs)
+        logger(
+          "M-" + monitor.id,
+          `${index}_${monitor.interval} calculated: ${JSON.stringify(
+            calc.current ? calc.current : calc
+          )}`
+        );
+
+      calculatedIndexes[index] = calc;
+      if (!executeAutomations) executeAutomations = !!calc.current;
+    } catch (err) {
+      logger(
+        "M-" + monitor.id,
+        `Exchange Monitor can't calc the index ${index}`
+      );
+      logger("M-" + monitor.id, err);
+      return false;
+    }
   });
 
-  //atualiza a memória do RiberBot com os indicadores calculados
+  return RiberBot.getInstance().updateAllMemory(
+    monitor.symbol,
+    calculatedIndexes,
+    monitor.interval,
+    executeAutomations
+  );
 }
 
 function startChartMonitor(monitor) {

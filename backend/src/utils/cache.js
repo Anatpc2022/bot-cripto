@@ -13,6 +13,11 @@ export default class Cache {
     this.MEMORY[key] = value;
   }
 
+  async setAll(keyValues) {
+    const keys = Object.keys(keyValues);
+    keys.map((k) => (this.MEMORY[k] = keyValues[k]));
+  }
+
   unset(key) {
     return (this.MEMORY[key] = undefined);
   }

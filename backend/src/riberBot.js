@@ -162,6 +162,35 @@ export default class RiberBot {
       return this.setCache(symbol, index, interval, value, executeAutomations);
   }
 
+  async updateAllMemory(
+    symbol,
+    calculatedIndexes,
+    interval,
+    executeAutomations = true
+  ) {
+    const keyValues = {};
+    Object.keys(calculatedIndexes).forEach((index) => {
+      const memoryKey = this.buildMemoryKey(symbol, index, interval);
+      keyValues[memoryKey] = calculatedIndexes[index];
+    });
+
+    this.cache.setAll(keyValues);
+
+    const results = [];
+
+    //testar as automações e retornar os resultados
+
+    if (LOGS)
+      logger(
+        "riberBot",
+        `RiberBot memory updated: ${symbol}_${interval} => ${JSON.stringify(
+          calculatedIndexes
+        )} => execute? ${executeAutomations}`
+      );
+
+    return results;
+  }
+
   deleteMemory(symbol, index, interval) {
     const memoryKey = this.buildMemoryKey(symbol, index, interval);
     return this.cache.unset(memoryKey);
