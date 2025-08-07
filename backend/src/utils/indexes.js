@@ -77,7 +77,406 @@ function getAnalysisIndexes() {
       execution: ichimoku,
       code: "ICHIMOKU",
     },
+    "ABANDONED-BABY": {
+      params: "",
+      name: "Abandoned Baby",
+      execution: abandonedBaby,
+      code: "ABANDONED-BABY",
+    },
+    "BEAR-ENGULF": {
+      params: "",
+      name: "Bearish Engulfing",
+      execution: bearishEngulfing,
+      code: "BEAR-ENGULF",
+    },
+    "BULL-ENGULF": {
+      params: "",
+      name: "Bullish Engulfing",
+      execution: bullishEngulfing,
+      code: "BULL-ENGULF",
+    },
+    "DARK-CLOUD-COVER": {
+      params: "",
+      name: "Dark Cloud Cover",
+      execution: darkCloudCover,
+      code: "DARK-CLOUD-COVER",
+    },
+    "DOWNSIDE-TASUKI-GAP": {
+      params: "",
+      name: "Downside Tasuki Gap",
+      execution: downsideTasukiGap,
+      code: "DOWNSIDE-TASUKI-GAP",
+    },
+    DOJI: { params: "", name: "Doji", execution: doji, code: "DOJI" },
+    "DRAGONFLY-DOJI": {
+      params: "",
+      name: "DragonFly Doji",
+      execution: dragonflyDoji,
+      code: "DRAGONFLY-DOJI",
+    },
+    "GRAVESTONE-DOJI": {
+      params: "",
+      name: "GraveStone Doji",
+      execution: graveStoneDoji,
+      code: "GRAVESTONE-DOJI",
+    },
+    "BEAR-HARAMI": {
+      params: "",
+      name: "Bearish Harami",
+      execution: bearishHarami,
+      code: "BEAR-HARAMI",
+    },
+    "BEAR-HARAMI-X": {
+      params: "",
+      name: "Bearish Harami Cross (X)",
+      execution: bearishHaramiCross,
+      code: "BEAR-HARAMI-X",
+    },
+    "BULL-HARAMI": {
+      params: "",
+      name: "Bullish Harami",
+      execution: bullishHarami,
+      code: "BULL-HARAMI",
+    },
+    "BULL-HARAMI-X": {
+      params: "",
+      name: "Bullish Harami Cross (X)",
+      execution: bullishHaramiCross,
+      code: "BULL-HARAMI-X",
+    },
+    "BULL-MARUBOZU": {
+      params: "",
+      name: "Bullish Marubozu",
+      execution: bullishMarubozu,
+      code: "BULL-MARUBOZU",
+    },
+    "BEAR-MARUBOZU": {
+      params: "",
+      name: "Bearish Marubozu",
+      execution: bearishMarubozu,
+      code: "BEAR-MARUBOZU",
+    },
+    "EVENING-DOJI-STAR": {
+      params: "",
+      name: "Evening Doji Star",
+      execution: eveningDojiStar,
+      code: "EVENING-DOJI-STAR",
+    },
+    "EVENING-STAR": {
+      params: "",
+      name: "Evening Star",
+      execution: eveningStar,
+      code: "EVENING-STAR",
+    },
+    "PIERCE-LINE": {
+      params: "",
+      name: "Piercing Line",
+      execution: piercingLine,
+      code: "PIERCE-LINE",
+    },
+    "BULL-SPIN-TOP": {
+      params: "",
+      name: "Bullish Spinning Top",
+      execution: bullishSpinningTop,
+      code: "BULL-SPIN-TOP",
+    },
+    "BEAR-SPIN-TOP": {
+      params: "",
+      name: "Bearish Spinning Top",
+      execution: bearishSpinningTop,
+      code: "BEAR-SPIN-TOP",
+    },
+    "MORNING-DOJI-STAR": {
+      params: "",
+      name: "Morning Doji Star",
+      execution: morningDojiStar,
+      code: "MORNING-DOJI-STAR",
+    },
+    "MORNING-STAR": {
+      params: "",
+      name: "Morning Star",
+      execution: morningStar,
+      code: "MORNING-STAR",
+    },
+    "3BLACK-CROWS": {
+      params: "",
+      name: "3 Black Crows",
+      execution: threeBlackCrows,
+      code: "3BLACK-CROWS",
+    },
+    "3WHITE-SOLDIERS": {
+      params: "",
+      name: "3 White Soldiers",
+      execution: threeWhiteSoldiers,
+      code: "3WHITE-SOLDIERS",
+    },
+    "BULL-HAMMER": {
+      params: "",
+      name: "Bullish Hammer",
+      execution: bullishHammer,
+      code: "BULL-HAMMER",
+    },
+    "BEAR-HAMMER": {
+      params: "",
+      name: "Bearish Hammer",
+      execution: bearishHammer,
+      code: "BEAR-HAMMER",
+    },
+    "BULL-INV-HAMMER": {
+      params: "",
+      name: "Bullish Inverted Hammer",
+      execution: bullishInvertedHammer,
+      code: "BULL-INV-HAMMER",
+    },
+    "BEAR-INV-HAMMER": {
+      params: "",
+      name: "Bearish Inverted Hammer",
+      execution: bearishInvertedHammer,
+      code: "BEAR-INV-HAMMER",
+    },
+    HAMMER: { params: "", name: "Hammer", execution: hammer, code: "HAMMER" },
+    "HAMMER-UNCONF": {
+      params: "",
+      name: "Hammer (Unconf.)",
+      execution: hammerUnconfirmed,
+      code: "HAMMER-UNCONF",
+    },
+    "HANGING-MAN": {
+      params: "",
+      name: "Hanging Man",
+      execution: hangingMan,
+      code: "HANGMAN",
+    },
+    "HANGING-MAN-UNCONF": {
+      params: "",
+      name: "Hanging Man (Unconf.)",
+      execution: hangingManUnconfirmed,
+      code: "HANGING-MAN-UNCONF",
+    },
+    "SHOOT-STAR": {
+      params: "",
+      name: "Shooting Star",
+      execution: shootingStar,
+      code: "SHOOTSTAR",
+    },
+    "SHOOT-STAR-UNCONF": {
+      params: "",
+      name: "Shooting Star (Unconf.)",
+      execution: shootingStarUnconfirmed,
+      code: "SHOOT-STAR-UNCONF",
+    },
+    "TWEEZER-TOP": {
+      params: "",
+      name: "Tweezer Top",
+      execution: tweezerTop,
+      code: "TWEEZER-TOP",
+    },
+    "TWEEZER-BOTTOM": {
+      params: "",
+      name: "Tweezer Bottom",
+      execution: tweezerBottom,
+      code: "TWEEZER-BOTTOM",
+    },
   };
+}
+
+function getCandles(ohlcv, qty) {
+  const result = {
+    open: [],
+    high: [],
+    low: [],
+    close: [],
+    volume: [],
+  };
+
+  let last = ohlcv.open.length - 1;
+  let i = 0;
+  while (i < qty) {
+    result.open.push(ohlcv.open[last]);
+    result.high.push(ohlcv.high[last]);
+    result.low.push(ohlcv.low[last]);
+    result.close.push(ohlcv.close[last]);
+    result.volume.push(ohlcv.volume[last]);
+    last--;
+    i++;
+  }
+
+  return result;
+}
+
+function abandonedBaby(ohlc) {
+  const input = getCandles(ohlc, 3);
+  return technicalindicators.abandonedbaby(input);
+}
+
+function bullishEngulfing(ohlc) {
+  const input = getCandles(ohlc, 2);
+  return technicalindicators.bullishengulfingpattern(input);
+}
+
+function bearishEngulfing(ohlc) {
+  const input = getCandles(ohlc, 2);
+  return technicalindicators.bearishengulfingpattern(input);
+}
+
+function darkCloudCover(ohlc) {
+  const input = getCandles(ohlc, 2);
+  return technicalindicators.darkcloudcover(input);
+}
+
+function downsideTasukiGap(ohlc) {
+  const input = getCandles(ohlc, 3);
+  return technicalindicators.downsidetasukigap(input);
+}
+
+function doji(ohlc) {
+  const input = getCandles(ohlc, 1);
+  return technicalindicators.doji(input);
+}
+
+function dragonflyDoji(ohlc) {
+  const input = getCandles(ohlc, 1);
+  return technicalindicators.dragonflydoji(input);
+}
+
+function graveStoneDoji(ohlc) {
+  const input = getCandles(ohlc, 1);
+  return technicalindicators.gravestonedoji(input);
+}
+
+function bearishHarami(ohlc) {
+  const input = getCandles(ohlc, 2);
+  return technicalindicators.bearishharami(input);
+}
+
+function bullishHarami(ohlc) {
+  const input = getCandles(ohlc, 2);
+  return technicalindicators.bullishharami(input);
+}
+
+function bullishHaramiCross(ohlc) {
+  const input = getCandles(ohlc, 2);
+  return technicalindicators.bullishharamicross(input);
+}
+
+function bearishHaramiCross(ohlc) {
+  const input = getCandles(ohlc, 2);
+  return technicalindicators.bearishharamicross(input);
+}
+
+function bullishMarubozu(ohlc) {
+  const input = getCandles(ohlc, 1);
+  return technicalindicators.bullishmarubozu(input);
+}
+
+function bearishMarubozu(ohlc) {
+  const input = getCandles(ohlc, 1);
+  return technicalindicators.bearishmarubozu(input);
+}
+
+function eveningDojiStar(ohlc) {
+  const input = getCandles(ohlc, 3);
+  return technicalindicators.eveningdojistar(input);
+}
+
+function eveningStar(ohlc) {
+  const input = getCandles(ohlc, 3);
+  return technicalindicators.eveningstar(input);
+}
+
+function piercingLine(ohlc) {
+  const input = getCandles(ohlc, 2);
+  return technicalindicators.piercingline(input);
+}
+
+function bullishSpinningTop(ohlc) {
+  const input = getCandles(ohlc, 1);
+  return technicalindicators.bullishspinningtop(input);
+}
+
+function bearishSpinningTop(ohlc) {
+  const input = getCandles(ohlc, 1);
+  return technicalindicators.bearishspinningtop(input);
+}
+
+function morningDojiStar(ohlc) {
+  const input = getCandles(ohlc, 3);
+  return technicalindicators.morningdojistar(input);
+}
+
+function morningStar(ohlc) {
+  const input = getCandles(ohlc, 3);
+  return technicalindicators.morningstar(input);
+}
+
+function threeBlackCrows(ohlc) {
+  const input = getCandles(ohlc, 3);
+  return technicalindicators.threeblackcrows(input);
+}
+
+function threeWhiteSoldiers(ohlc) {
+  const input = getCandles(ohlc, 3);
+  return technicalindicators.threewhitesoldiers(input);
+}
+
+function bullishHammer(ohlc) {
+  const input = getCandles(ohlc, 1);
+  return technicalindicators.bullishhammerstick(input);
+}
+
+function bearishHammer(ohlc) {
+  const input = getCandles(ohlc, 1);
+  return technicalindicators.bearishhammerstick(input);
+}
+
+function bearishInvertedHammer(ohlc) {
+  const input = getCandles(ohlc, 1);
+  return technicalindicators.bearishinvertedhammerstick(input);
+}
+
+function bullishInvertedHammer(ohlc) {
+  const input = getCandles(ohlc, 1);
+  return technicalindicators.bullishinvertedhammerstick(input);
+}
+
+function hammer(ohlc) {
+  const input = getCandles(ohlc, 5);
+  return technicalindicators.hammerpattern(input);
+}
+
+function hammerUnconfirmed(ohlc) {
+  const input = getCandles(ohlc, 5);
+  return technicalindicators.hammerpatternunconfirmed(input);
+}
+
+function hangingMan(ohlc) {
+  const input = getCandles(ohlc, 5);
+  return technicalindicators.hangingman(input);
+}
+
+function hangingManUnconfirmed(ohlc) {
+  const input = getCandles(ohlc, 5);
+  return technicalindicators.hangingmanunconfirmed(input);
+}
+
+function shootingStar(ohlc) {
+  const input = getCandles(ohlc, 5);
+  return technicalindicators.shootingstar(input);
+}
+
+function shootingStarUnconfirmed(ohlc) {
+  const input = getCandles(ohlc, 5);
+  return technicalindicators.shootingstarunconfirmed(input);
+}
+
+function tweezerTop(ohlc) {
+  const input = getCandles(ohlc, 5);
+  return technicalindicators.tweezertop(input);
+}
+
+function tweezerBottom(ohlc) {
+  const input = getCandles(ohlc, 5);
+  return technicalindicators.tweezerbottom(input);
 }
 
 function ADL(ohlc) {
