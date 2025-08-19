@@ -1,5 +1,6 @@
 import Sequelize from "sequelize";
 import database from "../db.js";
+import AutomationModel from "./automationModel.js";
 
 const OrderModel = database.define("order", {
   id: {
@@ -50,6 +51,10 @@ const OrderModel = database.define("order", {
   obs: Sequelize.STRING,
   createdAt: Sequelize.DATE,
   updatedAt: Sequelize.DATE,
+});
+
+OrderModel.belongsTo(AutomationModel, {
+  foreignKey: "automationId",
 });
 
 export default OrderModel;
