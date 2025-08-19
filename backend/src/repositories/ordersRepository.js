@@ -140,6 +140,18 @@ async function getLastFilledOrders(userId) {
   return orderModel.findAll({ where: { id: ids } });
 }
 
+async function removeAutomationFromOrders(automationId, transaction) {
+  return orderModel.update(
+    {
+      automationId: null,
+    },
+    {
+      where: { automationId },
+      transaction,
+    }
+  );
+}
+
 export default {
   orderStatus,
   STOP_TYPES,
@@ -154,4 +166,5 @@ export default {
   updateOrderById,
   updateOrderByOrderId,
   getLastFilledOrders,
+  removeAutomationFromOrders,
 };
