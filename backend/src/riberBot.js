@@ -23,7 +23,7 @@ export default class RiberBot {
     return { ...this.BRAIN };
   }
 
-  static FIAT_COINS = ["BRL", "EUR", "GBP"];
+  static FIAT_COINS = ["BRL", "EUR", "GBP", "JPY", "AUD", "NGN", "UAH", "TRY"];
 
   static DOLLAR_COINS = ["USD", "USDT", "USDC", "TUSD", "FDUSD", "UST"];
 
