@@ -3,6 +3,7 @@ import logger from "./utils/logger.js";
 import indexes from "./utils/indexes.js";
 
 const LOGS = process.env.RIBERBOT_LOGS === "true";
+const INTERVAL = parseInt(process.env.AUTOMATION_INTERVAL || 0);
 
 export default class RiberBot {
   static instance;
@@ -222,10 +223,59 @@ export default class RiberBot {
       return false;
     }
 
-    console.log(automations);
+    const results = [];
+    for (let i = 0; i < automations.length; i++) {
+      const automation = automations[i];
+      if (this.isLocked(automation.id)) continue;
 
-    //testar automações encontradas
-    //executar automações cujas condições foram atendidas
+      const result = await this.evalDecision(memoryKey, automation);
+      if (result) results.push(result);
+    }
+
+    if (!results || !results.length) return false;
+
+    return results.flat();
+  }
+
+  async evalDecision(memoryKey, automation) {
+    if (!automation || !memoryKey) return false;
+
+    try {
+      const isValid = await this.checkActivation(automation, memoryKey);
+      if (!isValid) return false;
+
+      if (this.isLocked(automation.id)) return false;
+      this.setLocked(automation.id, true);
+
+      if (LOGS || automation.logs)
+        logger(
+          "A-" + automation.id,
+          `RiberBot avaliou uma condição em '${automation.name}'`
+        );
+
+      let result = {};
+      //executar ordens
+      //enviar notificações
+      //atualizar automação
+
+      setTimeout(() => {
+        this.setLocked(automation.id, false);
+      }, INTERVAL);
+
+      return result || false;
+    } catch (err) {
+      if (automation.logs) logger("A-" + automation.id, err);
+      return {
+        type: "error",
+        text: `Erro em evalDecision para '${automation.name}': ${err.message}`,
+        automationId: automation.id,
+      };
+    }
+  }
+
+  async checkActivation(automation, memoryKey) {
+    console.log("check ativação ", memoryKey, automation.id);
+    return false;
   }
 
   findAutomations(memoryKey) {
