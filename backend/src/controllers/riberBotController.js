@@ -12,7 +12,7 @@ async function getBrain(req, res) {
 }
 
 async function getBrainIndexes(req, res) {
-  const brainIndexes = await Beholder.getInstance().getBrainIndexes();
+  const brainIndexes = await RiberBot.getInstance().getBrainIndexes();
   res.json(brainIndexes);
 }
 

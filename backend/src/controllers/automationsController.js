@@ -58,11 +58,11 @@ async function updateAutomation(req, res) {
   if (!currentAutomation) return res.sendStatus(404);
   if (currentAutomation.userId !== userId) return res.sendStatus(403);
 
+  RiberBot.getInstance().deleteBrain(currentAutomation);
   const automation = await automationsRepository.updateAutomation(
     id,
     newAutomation
   );
-  RiberBot.getInstance().deleteBrain(automation);
 
   if (automation.isActive) {
     RiberBot.getInstance().updateBrain(automation.get({ plain: true }));

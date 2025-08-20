@@ -17,6 +17,7 @@ export default class RiberBot {
 
     this.BRAIN = {};
     this.BRAIN_INDEX = {};
+    this.BRAIN_LOCK = {};
 
     if (!automations || !automations.length) return;
 
@@ -27,6 +28,18 @@ export default class RiberBot {
         `O Cérebro do RiberBot foi iniciado para o usuário ${automations[0].userId}!`
       );
     }, 1000);
+  }
+
+  setLocked(automationId, value) {
+    if (Array.isArray(automationId))
+      return automationId.map((id) => (this.BRAIN_LOCK[id] = value));
+    return (this.BRAIN_LOCK[automationId] = value);
+  }
+
+  isLocked(automationId) {
+    if (Array.isArray(automationId))
+      return automationId.some((id) => this.BRAIN_LOCK[id] === true);
+    return this.BRAIN_LOCK[automationId] === true;
   }
 
   updateBrain(automation) {
@@ -70,19 +83,23 @@ export default class RiberBot {
   }
 
   deleteBrain(automation) {
-    //chaveamento da memória do RiberBot
-    this.deleteBrainIndex(
-      `${automation.openIndexes},${automation.closeIndexes}`,
-      automation.id
-    );
+    try {
+      this.setLocked(automation.id, true);
 
-    delete this.BRAIN[automation.id];
-
-    if (automation.logs)
-      logger(
-        "A-" + automation.id,
-        `Automação removida do CÉREBRO #${automation.id}`
+      this.deleteBrainIndex(
+        `${automation.openIndexes},${automation.closeIndexes}`,
+        automation.id
       );
+      delete this.BRAIN[automation.id];
+
+      if (automation.logs)
+        logger(
+          "A-" + automation.id,
+          `Automação removida do CÉREBRO #${automation.id}`
+        );
+    } finally {
+      this.setLocked(automation.id, false);
+    }
   }
 
   deleteBrainIndex(indexes, automationId) {
@@ -185,7 +202,7 @@ export default class RiberBot {
 
     if (LOGS)
       logger(
-        "riberBot",
+        "riberBot -",
         `RiberBot memória atualizada: ${memoryKey} => ${JSON.stringify(value)}`
       );
 
@@ -313,8 +330,8 @@ export default class RiberBot {
 
     if (LOGS)
       logger(
-        "riberBot",
-        `RiberBot memory updated: ${symbol}_${interval} => ${JSON.stringify(
+        "riberBot -",
+        `RiberBot memória atualizada: ${symbol}_${interval} => ${JSON.stringify(
           calculatedIndexes
         )} => execute? ${executeAutomations}`
       );
