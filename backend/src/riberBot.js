@@ -208,7 +208,30 @@ export default class RiberBot {
 
     this.cache.set(memoryKey, value);
 
-    //testa as automações
+    if (executeAutomations) return this.updatedMemory(memoryKey);
+  }
+
+  async updatedMemory(memoryKey) {
+    const automations = this.findAutomations(memoryKey) || [];
+    if (!automations || !automations.length) {
+      if (LOGS)
+        logger(
+          "riberBot",
+          `RiberBot não possui automações para chave de memória ${memoryKey}`
+        );
+      return false;
+    }
+
+    console.log(automations);
+
+    //testar automações encontradas
+    //executar automações cujas condições foram atendidas
+  }
+
+  findAutomations(memoryKey) {
+    const ids = this.BRAIN_INDEX[memoryKey];
+    if (!ids || !ids.length) return [];
+    return [...new Set(ids)].map((id) => this.BRAIN[id]).filter((a) => a) || [];
   }
 
   async getMemory(symbolOrKey, index = undefined, interval = undefined) {
@@ -269,22 +292,18 @@ export default class RiberBot {
       index.startsWith(indexes.indexKeys.LAST_ORDER) ||
       index.startsWith(indexes.indexKeys.AUTO_ORDER)
     )
-      return this.setCache(
-        symbol,
-        index,
-        interval,
-        this.getLightOrder(value),
-        executeAutomations
-      );
+      return this.updateOrderMemory(index, value, executeAutomations);
     else if (index === indexes.indexKeys.TICKER)
       return this.updateTickerMemory(symbol, index, value, executeAutomations);
     else
       return this.setCache(symbol, index, interval, value, executeAutomations);
   }
 
-  getLightOrder(order) {
+  updateOrderMemory(index, order, executeAutomations) {
     if (order.toJSON) order = order.toJSON();
     if (order.get) order = order.get({ plain: true });
+
+    const symbol = order.symbol;
 
     delete order.id;
     delete order.symbol;
@@ -307,7 +326,7 @@ export default class RiberBot {
     order.net = order.net ? parseFloat(order.net) : null;
     order.quantity = order.quantity ? parseFloat(order.quantity) : null;
 
-    return order;
+    return this.setCache(symbol, index, null, order, executeAutomations);
   }
 
   async updateAllMemory(
@@ -324,9 +343,14 @@ export default class RiberBot {
 
     this.cache.setAll(keyValues);
 
+    const keys = Object.keys(keyValues);
     const results = [];
 
-    //testar as automações e retornar os resultados
+    for (let i = 0; i < keys.length; i++) {
+      const memoryKey = keys[i];
+      const result = await this.updatedMemory(memoryKey);
+      if (result) results.push(result);
+    }
 
     if (LOGS)
       logger(
