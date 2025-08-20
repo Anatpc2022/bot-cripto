@@ -16,7 +16,38 @@ export default class RiberBot {
     this.cache = new Cache();
 
     this.BRAIN = {};
-    //inicializar o brain com as automationsAdd commentMore actions
+    if (!automations || !automations.length) return;
+
+    setTimeout(() => {
+      automations.filter((a) => a.isActive).map((a) => this.updateBrain(a));
+      logger(
+        "riberBot -",
+        `O Cérebro do RiberBot foi iniciado para o usuário ${automations[0].userId}!`
+      );
+    }, 1000);
+  }
+
+  updateBrain(automation) {
+    if (
+      !automation.isActive ||
+      (!automation.openCondition && !automation.closeCondition)
+    )
+      return;
+
+    automation = this.getLightAutomation(automation);
+
+    this.BRAIN[automation.id] = automation;
+
+    //atualizar o índice do cérebro do riberBot
+  }
+
+  getLightAutomation(automation) {
+    if (automation.toJSON) automation = automation.toJSON();
+
+    delete automation.createdAt;
+    delete automation.updatedAt;
+
+    return automation;
   }
 
   getBrain() {

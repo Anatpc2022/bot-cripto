@@ -4,6 +4,8 @@ import logger from "./utils/logger.js";
 import appEm from "./app-em.js";
 import appWs from "./app-ws.js";
 import usersRepository from "./repositories/usersRepository.js";
+import automationsRepository from "./repositories/automationsRepository.js";
+import RiberBot from "./riberBot.js";
 
 async function start() {
     logger("sistema", "Sua versão do Node.js é " + process.version);
@@ -12,6 +14,9 @@ async function start() {
 
     const users = await usersRepository.getActiveUsers();
     if(!users || !users.length) return logger("sistema", "Nenhum usuário ativo encontrado!");
+
+    const automations = await automationsRepository.getActiveAutomations(users[0].id);
+    RiberBot.getInstance(automations);
 
     logger("sistema", "Iniciando os Apps do servidor...");
 
