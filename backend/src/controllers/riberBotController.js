@@ -11,6 +11,11 @@ async function getBrain(req, res) {
   res.json(brain);
 }
 
+async function getBrainIndexes(req, res) {
+  const brainIndexes = await Beholder.getInstance().getBrainIndexes();
+  res.json(brainIndexes);
+}
+
 async function updateMemory(req, res) {
   const memoryKey = req.params.index;
   let [symbol, index] = memoryKey.split(":");
@@ -37,6 +42,7 @@ function getAnalysisIndexes(req, res) {
 export default {
   getMemory,
   getBrain,
+  getBrainIndexes,
   updateMemory,
   getAnalysisIndexes,
 };

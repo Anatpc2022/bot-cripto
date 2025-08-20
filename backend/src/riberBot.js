@@ -16,6 +16,7 @@ export default class RiberBot {
     this.cache = new Cache();
 
     this.BRAIN = {};
+    this.BRAIN_INDEX = {};
 
     if (!automations || !automations.length) return;
 
@@ -39,7 +40,12 @@ export default class RiberBot {
 
     this.BRAIN[automation.id] = automation;
 
-    //atualizar o índice do cérebro do riberBot
+    const indexes = automation.isOpened
+      ? automation.closeIndexes
+      : automation.openIndexes;
+    if (!indexes) return;
+
+    this.updateBrainIndex(indexes.split(","), automation);
 
     if (automation.logs)
       logger(
@@ -48,9 +54,27 @@ export default class RiberBot {
       );
   }
 
+  updateBrainIndex(indexOrIndexes, automation) {
+    if (!indexOrIndexes || !automation) return;
+
+    if (Array.isArray(indexOrIndexes)) {
+      indexOrIndexes = indexOrIndexes.filter((ix) => ix);
+      if (!indexOrIndexes.length) return;
+      indexOrIndexes.map((ix) => this.updateBrainIndex(ix, automation));
+    } else {
+      if (!this.BRAIN_INDEX[indexOrIndexes])
+        this.BRAIN_INDEX[indexOrIndexes] = [automation.id];
+      else if (!this.BRAIN_INDEX[indexOrIndexes].includes(automation.id))
+        this.BRAIN_INDEX[indexOrIndexes].push(automation.id);
+    }
+  }
+
   deleteBrain(automation) {
     //chaveamento da memória do RiberBot
-    //atualizar o índice do cérebro do riberBot
+    this.deleteBrainIndex(
+      `${automation.openIndexes},${automation.closeIndexes}`,
+      automation.id
+    );
 
     delete this.BRAIN[automation.id];
 
@@ -59,6 +83,18 @@ export default class RiberBot {
         "A-" + automation.id,
         `Automação removida do CÉREBRO #${automation.id}`
       );
+  }
+
+  deleteBrainIndex(indexes, automationId) {
+    if (typeof indexes === "string") indexes = indexes.split(",");
+    indexes = indexes.filter((ix) => ix);
+    indexes.map((ix) => {
+      if (!this.BRAIN_INDEX[ix] || !this.BRAIN_INDEX[ix].length) return;
+
+      const start = this.BRAIN_INDEX[ix].findIndex((id) => id === automationId);
+      if (start === -1) return;
+      this.BRAIN_INDEX[ix].splice(start, 1);
+    });
   }
 
   getLightAutomation(automation) {
@@ -73,6 +109,10 @@ export default class RiberBot {
 
   getBrain() {
     return { ...this.BRAIN };
+  }
+
+  getBrainIndexes() {
+    return { ...this.BRAIN_INDEX };
   }
 
   static FIAT_COINS = ["BRL", "EUR", "GBP", "JPY", "AUD", "NGN", "UAH", "TRY"];
