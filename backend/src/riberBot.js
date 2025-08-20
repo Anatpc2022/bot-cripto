@@ -274,8 +274,68 @@ export default class RiberBot {
   }
 
   async checkActivation(automation, memoryKey) {
-    console.log("check ativação ", memoryKey, automation.id);
+    let indexes = automation.isOpened
+      ? automation.closeIndexes
+      : automation.openIndexes;
+    if (!indexes) return true;
+
+    indexes = indexes.split(",").filter((ix) => ix);
+    if (!indexes || !indexes.length) return true;
+
+    const MEMORY = await this.cache.getAll(...indexes);
+    const hasVariablesInMemory = indexes.every(
+      (ix) => MEMORY[ix] !== null && MEMORY[ix] !== undefined
+    );
+    if (!hasVariablesInMemory) return false;
+
+    //openIndexes BTCUSDT:TICKER
+    //openCondition MEMORY['BTCUSDT:TICKER'].current.close > 100000
+    const originalCondition = automation.isOpened
+      ? automation.closeCondition
+      : automation.openCondition;
+    const invertedCondition = this.shouldntInvert(automation, memoryKey)
+      ? ""
+      : this.invertCondition(memoryKey, originalCondition);
+
+    const evalCondition =
+      originalCondition + (invertedCondition ? " && " + invertedCondition : "");
+
+    console.log("check activation", evalCondition);
     return false;
+  }
+
+  invertCondition(memoryKey, condition) {
+    const conds = condition.split(" && ");
+    const condToInvert = conds.find(
+      (c) => c.indexOf(memoryKey) !== -1 && c.indexOf("current") !== -1
+    );
+    if (!condToInvert) return "";
+
+    if (condToInvert.indexOf(">=") !== -1)
+      return condToInvert.replace(">=", "<").replace(/current/g, "previous");
+    if (condToInvert.indexOf("<=") !== -1)
+      return condToInvert.replace("<=", ">").replace(/current/g, "previous");
+    if (condToInvert.indexOf(">") !== -1)
+      return condToInvert.replace(">", "<").replace(/current/g, "previous");
+    if (condToInvert.indexOf("<") !== -1)
+      return condToInvert.replace("<", ">").replace(/current/g, "previous");
+    if (condToInvert.indexOf("!") !== -1)
+      return condToInvert.replace("!", "=").replace(/current/g, "previous");
+    if (condToInvert.indexOf("==") !== -1)
+      return condToInvert.replace("==", "!=").replace(/current/g, "previous");
+    return "";
+  }
+
+  shouldntInvert(automation, memoryKey) {
+    //para desabilitar o double check: apenas return true
+    if (!automation.openTemplateId && !automation.closeTemplateId) return false;
+
+    return (
+      memoryKey.indexOf(`:${indexes.indexKeys.LAST_ORDER}`) !== -1 ||
+      memoryKey.indexOf(`:${indexes.indexKeys.AUTO_ORDER}`) !== -1 ||
+      memoryKey.indexOf(`:${indexes.indexKeys.LAST_CANDLE}`) !== -1 ||
+      memoryKey.indexOf(`:${indexes.indexKeys.PREVIOUS_CANDLE}`) !== -1
+    );
   }
 
   findAutomations(memoryKey) {

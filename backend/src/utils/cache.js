@@ -9,6 +9,12 @@ export default class Cache {
     return this.MEMORY[key];
   }
 
+  async getAll(...keys) {
+    const results = {};
+    keys.map((k) => (results[k] = this.MEMORY[k]));
+    return results;
+  }
+
   async set(key, value) {
     this.MEMORY[key] = value;
   }
