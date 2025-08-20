@@ -16,6 +16,7 @@ export default class RiberBot {
     this.cache = new Cache();
 
     this.BRAIN = {};
+
     if (!automations || !automations.length) return;
 
     setTimeout(() => {
@@ -39,10 +40,30 @@ export default class RiberBot {
     this.BRAIN[automation.id] = automation;
 
     //atualizar o índice do cérebro do riberBot
+
+    if (automation.logs)
+      logger(
+        "A-" + automation.id,
+        `Automação adicionada ao CÉREBRO #${automation.id}`
+      );
+  }
+
+  deleteBrain(automation) {
+    //chaveamento da memória do RiberBot
+    //atualizar o índice do cérebro do riberBot
+
+    delete this.BRAIN[automation.id];
+
+    if (automation.logs)
+      logger(
+        "A-" + automation.id,
+        `Automação removida do CÉREBRO #${automation.id}`
+      );
   }
 
   getLightAutomation(automation) {
     if (automation.toJSON) automation = automation.toJSON();
+    if (automation.get) automation = automation.get({ plain: true });
 
     delete automation.createdAt;
     delete automation.updatedAt;
@@ -187,10 +208,49 @@ export default class RiberBot {
     if (value.toJSON) value = value.toJSON();
     if (value.get) value = value.get({ plain: true });
 
-    if (index === indexes.indexKeys.TICKER)
+    if (
+      index.startsWith(indexes.indexKeys.LAST_ORDER) ||
+      index.startsWith(indexes.indexKeys.AUTO_ORDER)
+    )
+      return this.setCache(
+        symbol,
+        index,
+        interval,
+        this.getLightOrder(value),
+        executeAutomations
+      );
+    else if (index === indexes.indexKeys.TICKER)
       return this.updateTickerMemory(symbol, index, value, executeAutomations);
     else
       return this.setCache(symbol, index, interval, value, executeAutomations);
+  }
+
+  getLightOrder(order) {
+    if (order.toJSON) order = order.toJSON();
+    if (order.get) order = order.get({ plain: true });
+
+    delete order.id;
+    delete order.symbol;
+    delete order.automationId;
+    delete order.userId;
+    delete order.orderId;
+    delete order.transactTime;
+    delete order.commission;
+    delete order.obs;
+    delete order.createdAt;
+    delete order.updatedAt;
+    delete order.automation;
+
+    order.limitPrice = order.limitPrice ? parseFloat(order.limitPrice) : null;
+    order.stopPrice = order.stopPrice ? parseFloat(order.stopPrice) : null;
+    order.trailingDelta = order.trailingDelta
+      ? parseInt(order.trailingDelta)
+      : null;
+    order.avgPrice = order.avgPrice ? parseFloat(order.avgPrice) : null;
+    order.net = order.net ? parseFloat(order.net) : null;
+    order.quantity = order.quantity ? parseFloat(order.quantity) : null;
+
+    return order;
   }
 
   async updateAllMemory(
