@@ -242,6 +242,7 @@ export default class RiberBot {
 
     try {
       const isValid = await this.checkActivation(automation, memoryKey);
+      console.log(memoryKey, isValid);
       if (!isValid) return false;
 
       if (this.isLocked(automation.id)) return false;
@@ -288,8 +289,6 @@ export default class RiberBot {
     );
     if (!hasVariablesInMemory) return false;
 
-    //openIndexes BTCUSDT:TICKER
-    //openCondition MEMORY['BTCUSDT:TICKER'].current.close > 100000
     const originalCondition = automation.isOpened
       ? automation.closeCondition
       : automation.openCondition;
@@ -300,8 +299,17 @@ export default class RiberBot {
     const evalCondition =
       originalCondition + (invertedCondition ? " && " + invertedCondition : "");
 
-    console.log("check activation", evalCondition);
-    return false;
+    if (LOGS || automation.logs) {
+      logger(
+        "A-" + automation.id,
+        `RiberBot tentando analizar:\n${evalCondition} at ${automation.name}`
+      );
+      logger("A-" + automation.id, MEMORY);
+    }
+
+    return evalCondition
+      ? Function("MEMORY", "return " + evalCondition)(MEMORY)
+      : true;
   }
 
   invertCondition(memoryKey, condition) {

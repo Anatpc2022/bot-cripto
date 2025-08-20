@@ -4,6 +4,14 @@ import db from "../db.js";
 import logger from "../utils/logger.js";
 import RiberBot from "../riberBot.js";
 
+//MEMORY['BTCUSDT:TICKER'].current.close > 100000
+//MEMORY['BTCUSDT:TICKER'].current.close > MEMORY['BTCUSDT:TICKER'].current.close
+function validateConditions(conditions) {
+  return /^(MEMORY\[\'.+?\'\](\..+)?[><=!]+\(?([0-9\.\-]+|(\'.+?\')|true|false|MEMORY\[\'.+?\'\](\..+)?)\)?( && )?)+$/g.test(
+    conditions
+  );
+}
+
 async function getAutomation(req, res) {
   const userId = res.locals.token.id;
   const id = req.params.id;
@@ -33,7 +41,11 @@ async function insertAutomation(req, res) {
   );
   if (alreadyExists) return res.sendStatus(409);
 
-  //validar as condições da automação
+  if (
+    !validateConditions(newAutomation.openCondition) &&
+    !validateConditions(newAutomation.closeCondition)
+  )
+    return res.sendStatus(422);
 
   const automation = await automationsRepository.insertAutomation(
     newAutomation
@@ -52,7 +64,11 @@ async function updateAutomation(req, res) {
   const newAutomation = req.body;
   newAutomation.userId = userId;
 
-  //validar as condições atualizadas
+  if (
+    !validateConditions(newAutomation.openCondition) &&
+    !validateConditions(newAutomation.closeCondition)
+  )
+    return res.sendStatus(422);
 
   const currentAutomation = await automationsRepository.getAutomation(id);
   if (!currentAutomation) return res.sendStatus(404);
