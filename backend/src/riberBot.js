@@ -1,6 +1,7 @@
 import Cache from "./utils/cache.js";
 import logger from "./utils/logger.js";
 import indexes from "./utils/indexes.js";
+import usersRepository from "./repositories/usersRepository.js";
 
 const LOGS = process.env.RIBERBOT_LOGS === "true";
 const INTERVAL = parseInt(process.env.AUTOMATION_INTERVAL || 0);
@@ -242,7 +243,6 @@ export default class RiberBot {
 
     try {
       const isValid = await this.checkActivation(automation, memoryKey);
-      console.log(memoryKey, isValid);
       if (!isValid) return false;
 
       if (this.isLocked(automation.id)) return false;
@@ -255,9 +255,32 @@ export default class RiberBot {
         );
 
       let result = {};
-      //executar ordens
-      //enviar notificações
-      //atualizar automação
+      const user = await usersRepository.getUser(automation.userId);
+
+      if (
+        (automation.isOpened && automation.closeTemplateId) ||
+        (!automation.isOpened && automation.openTemplateId)
+      ) {
+        //executar ordens
+        //atualizar automação
+      }
+
+      const notificationResult = await this.sendNotifications(
+        user,
+        automation,
+        result
+      );
+      if (!result) result = notificationResult;
+
+      if (automation.logs && result)
+        logger(
+          "A-" + automation.id,
+          `Result for '${automation.name}' was ${JSON.stringify(
+            result
+          )} at ${new Date()}`
+        );
+
+      result.automationId = automation.id;
 
       setTimeout(() => {
         this.setLocked(automation.id, false);
@@ -272,6 +295,28 @@ export default class RiberBot {
         automationId: automation.id,
       };
     }
+  }
+
+  async sendNotifications(user, automation, result) {
+    if (!automation.sendNotification) return result;
+
+    //enviar mensagem via telegram
+
+    //enviar mensagem via email
+    if (user.email && process.env.SMTP_SERVER) {
+      const emailResult = await this.sendEmail(
+        user.email,
+        automation,
+        result.text + "\n" + automation.name
+      );
+      if (!result) result = emailResult;
+    }
+
+    return result;
+  }
+
+  async sendEmail(email, automation, message) {
+    console.log("Email enviado", email, automation, message);
   }
 
   async checkActivation(automation, memoryKey) {
