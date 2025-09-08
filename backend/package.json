@@ -24,6 +24,7 @@
     "morgan": "^1.10.0",
     "mysql2": "^3.14.1",
     "node-binance-api": "^1.0.10",
+    "nodemailer": "^7.0.6",
     "sequelize": "^6.37.7",
     "technicalindicators": "^3.1.0",
     "ws": "^8.18.2"

@@ -2,6 +2,7 @@ import Cache from "./utils/cache.js";
 import logger from "./utils/logger.js";
 import indexes from "./utils/indexes.js";
 import usersRepository from "./repositories/usersRepository.js";
+import mailer from "./utils/email.js";
 
 const LOGS = process.env.RIBERBOT_LOGS === "true";
 const INTERVAL = parseInt(process.env.AUTOMATION_INTERVAL || 0);
@@ -300,9 +301,15 @@ export default class RiberBot {
   async sendNotifications(user, automation, result) {
     if (!automation.sendNotification) return result;
 
-    //enviar mensagem via telegram
+    if (user.telegramChat && process.env.TELEGRAM_TOKEN) {
+      const telegramResult = await this.sendTelegram(
+        user.telegramChat,
+        automation,
+        result.text + "\n" + automation.name
+      );
+      if (!result) result = telegramResult;
+    }
 
-    //enviar mensagem via email
     if (user.email && process.env.SMTP_SERVER) {
       const emailResult = await this.sendEmail(
         user.email,
@@ -315,8 +322,23 @@ export default class RiberBot {
     return result;
   }
 
+  async sendTelegram(telegramChat, automation, message) {
+    console.log("sendTelegram", telegramChat, automation, message);
+  }
+
   async sendEmail(email, automation, message) {
-    console.log("Email enviado", email, automation, message);
+    const defaultMessage = automation.name + " disparou!";
+    await mailer(message ? message : defaultMessage, email, defaultMessage);
+    if (automation.logs)
+      logger(
+        "A-" + automation.id,
+        `E-mail enviado pela automação '${automation.name}'!`
+      );
+    return {
+      text: `E-mail enviado pela automação '${automation.name}'!`,
+      type: "success",
+      automationId: automation.id,
+    };
   }
 
   async checkActivation(automation, memoryKey) {
@@ -344,13 +366,11 @@ export default class RiberBot {
     const evalCondition =
       originalCondition + (invertedCondition ? " && " + invertedCondition : "");
 
-    if (LOGS || automation.logs) {
+    if (LOGS || automation.logs)
       logger(
         "A-" + automation.id,
         `RiberBot tentando analizar:\n${evalCondition} at ${automation.name}`
       );
-      logger("A-" + automation.id, MEMORY);
-    }
 
     return evalCondition
       ? Function("MEMORY", "return " + evalCondition)(MEMORY)
