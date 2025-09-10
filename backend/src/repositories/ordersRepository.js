@@ -1,5 +1,5 @@
 import orderModel from "../models/orderModel.js";
-import Sequelize from "sequelize";
+import Sequelize, { Op } from "sequelize";
 
 const orderTypes = {
   MARKET: "MARKET",
@@ -140,6 +140,23 @@ async function getLastFilledOrders(userId) {
   return orderModel.findAll({ where: { id: ids } });
 }
 
+async function getLastAutomationOrders() {
+  const where = {
+    automationId: { [Op.ne]: null },
+    status: orderStatus.FILLED,
+  };
+
+  const idObjects = await orderModel.findAll({
+    where,
+    group: "automationId",
+    attributes: [Sequelize.fn("max", Sequelize.col("id"))],
+    raw: true,
+  });
+
+  const ids = idObjects.map((o) => Object.values(o)).flat();
+  return orderModel.findAll({ where: { id: ids } });
+}
+
 async function removeAutomationFromOrders(automationId, transaction) {
   return orderModel.update(
     {
@@ -166,5 +183,6 @@ export default {
   updateOrderById,
   updateOrderByOrderId,
   getLastFilledOrders,
+  getLastAutomationOrders,
   removeAutomationFromOrders,
 };

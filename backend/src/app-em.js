@@ -22,12 +22,17 @@ async function startTickerMonitor() {
     let results = await Promise.all(
       markets.map((mkt) => {
         if (!symbolsMap[mkt.symbol]) return false;
-        return riberBot.updateMemory(mkt.symbol, "TICKER", null, mkt);
+        return riberBot.updateMemory(
+          mkt.symbol,
+          indexes.indexKeys.TICKER,
+          null,
+          mkt
+        );
       })
     );
     if (!results) return;
 
-    results = results.filter((r) => r);
+    results = results.flat().filter((r) => r);
     if (results.length) results.map((r) => WSS.broadcast({ notification: r })); //{ text, type: success|error }
   });
   logger("M-TICKER", "Ticker Monitor foi iniciado!");
@@ -39,13 +44,16 @@ async function loadWallet(userId, executeAutomations = true) {
   let results = await Promise.all(
     Object.keys(info).map(async (item) => {
       if (executeAutomations) {
-        const memory = await riberBot.getMemory(item, `WALLET_${userId}`);
+        const memory = await riberBot.getMemory(
+          item,
+          `${indexes.indexKeys.WALLET}_${userId}`
+        );
         if (memory === info[item].available) return;
       }
 
       return riberBot.updateMemory(
         item,
-        `WALLET_${userId}`,
+        `${indexes.indexKeys.WALLET}_${userId}`,
         null,
         parseFloat(info[item].available),
         executeAutomations
@@ -109,10 +117,18 @@ function scheduleOrderUpdate(order, userId) {
       const riberBot = RiberBot.getInstance();
       riberBot.updateMemory(
         order.symbol,
-        `LAST_ORDER_${userId}`,
+        `${indexes.indexKeys.LAST_ORDER}_${userId}`,
         null,
         updatedOrder.get({ plain: true })
       );
+
+      if (updatedOrder.automationId)
+        riberBot.updateMemory(
+          order.symbol,
+          `${indexes.indexKeys.AUTO_ORDER}_${updatedOrder.automationId}`,
+          null,
+          updatedOrder.get({ plain: true })
+        );
     } catch (err) {
       logger("U-" + userId, err);
     }
@@ -320,7 +336,7 @@ function stopChartMonitor(monitor) {
 
 async function init(userId, wssInstance) {
   WSS = wssInstance;
-
+  
   exchange = new Exchange(userId);
 
   startTickerMonitor();
@@ -329,12 +345,25 @@ async function init(userId, wssInstance) {
 
   logger("sistema", "Carregando as últimas ordens de Spot...");
   const lastOrders = await ordersRepository.getLastFilledOrders(userId);
+  const lastAutomationOrders = await ordersRepository.getLastAutomationOrders();
+
   const riberBot = RiberBot.getInstance();
   await Promise.all(
     lastOrders.map((order) =>
       riberBot.updateMemory(
         order.symbol,
-        `LAST_ORDER_${userId}`,
+        `${indexes.indexKeys.LAST_ORDER}_${userId}`,
+        null,
+        order.get({ plain: true }),
+        false
+      )
+    )
+  );
+  await Promise.all(
+    lastAutomationOrders.map((order) =>
+      riberBot.updateMemory(
+        order.symbol,
+        `${indexes.indexKeys.AUTO_ORDER}_${order.automationId}`,
         null,
         order.get({ plain: true }),
         false

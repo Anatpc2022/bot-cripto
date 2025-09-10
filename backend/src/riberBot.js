@@ -118,9 +118,11 @@ export default class RiberBot {
     });
   }
 
-  getLightAutomation(automation) {
-    if (automation.toJSON) automation = automation.toJSON();
-    if (automation.get) automation = automation.get({ plain: true });
+  getLightAutomation(originalAutomation) {
+    let automation = { ...originalAutomation };
+    if (originalAutomation.toJSON) automation = originalAutomation.toJSON();
+    if (originalAutomation.get)
+      automation = originalAutomation.get({ plain: true });
 
     delete automation.createdAt;
     delete automation.updatedAt;
@@ -210,7 +212,7 @@ export default class RiberBot {
         `RiberBot memória atualizada: ${memoryKey} => ${JSON.stringify(value)}`
       );
 
-    this.cache.set(memoryKey, value);
+    await this.cache.set(memoryKey, value);
 
     if (executeAutomations) return this.updatedMemory(memoryKey);
   }
@@ -277,7 +279,7 @@ export default class RiberBot {
         automation,
         result
       );
-      if (!result) result = notificationResult;
+      if (!result.text) result = notificationResult;
 
       if (automation.logs && result)
         logger(
@@ -313,7 +315,7 @@ export default class RiberBot {
         automation,
         result.text + "\n" + automation.name
       );
-      if (!result) result = telegramResult;
+      if (!result.text) result = telegramResult;
     }
 
     if (user.email && process.env.SMTP_SERVER) {
@@ -322,7 +324,7 @@ export default class RiberBot {
         automation,
         result.text + "\n" + automation.name
       );
-      if (!result) result = emailResult;
+      if (!result.text) result = emailResult;
     }
 
     return result;
@@ -442,7 +444,13 @@ export default class RiberBot {
     else return this.cache.search();
   }
 
-  async updateTickerMemory(symbol, index, ticker, executeAutomations = true) {
+  async updateTickerMemory(
+    symbol,
+    index,
+    originalTicker,
+    executeAutomations = true
+  ) {
+    const ticker = { ...originalTicker };
     ticker.priceChange = parseFloat(ticker.priceChange);
     ticker.percentChange = parseFloat(ticker.percentChange);
     ticker.averagePrice = parseFloat(ticker.averagePrice);
@@ -499,9 +507,11 @@ export default class RiberBot {
       return this.setCache(symbol, index, interval, value, executeAutomations);
   }
 
-  updateOrderMemory(index, order, executeAutomations) {
-    if (order.toJSON) order = order.toJSON();
-    if (order.get) order = order.get({ plain: true });
+  updateOrderMemory(index, originalOrder, executeAutomations) {
+    let order = { ...originalOrder };
+
+    if (originalOrder.toJSON) order = originalOrder.toJSON();
+    if (originalOrder.get) order = originalOrder.get({ plain: true });
 
     const symbol = order.symbol;
 
