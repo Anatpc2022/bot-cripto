@@ -3,6 +3,7 @@ import logger from "./utils/logger.js";
 import indexes from "./utils/indexes.js";
 import usersRepository from "./repositories/usersRepository.js";
 import mailer from "./utils/email.js";
+import telegram from "./utils/telegram.js";
 
 const LOGS = process.env.RIBERBOT_LOGS === "true";
 const INTERVAL = parseInt(process.env.AUTOMATION_INTERVAL || 0);
@@ -264,6 +265,11 @@ export default class RiberBot {
       ) {
         //executar ordens
         //atualizar automação
+        result = {
+          type: "success",
+          text: "Ordem enviada!",
+          automationId: automation.id,
+        };
       }
 
       const notificationResult = await this.sendNotifications(
@@ -323,7 +329,18 @@ export default class RiberBot {
   }
 
   async sendTelegram(telegramChat, automation, message) {
-    console.log("sendTelegram", telegramChat, automation, message);
+    const defaultMessage = automation.name + " disparou!";
+    await telegram(telegramChat, message ? message : defaultMessage);
+    if (automation.logs)
+      logger(
+        "A-" + automation.id,
+        `Telegram enviado pela automação '${automation.name}'!`
+      );
+    return {
+      text: `Telegram enviado pela automação '${automation.name}'!`,
+      type: "success",
+      automationId: automation.id,
+    };
   }
 
   async sendEmail(email, automation, message) {
@@ -457,7 +474,7 @@ export default class RiberBot {
     newMemory.previous = currentMemory ? currentMemory.current : ticker;
     newMemory.current = ticker;
 
-    this.setCache(symbol, index, null, newMemory, executeAutomations);
+    return this.setCache(symbol, index, null, newMemory, executeAutomations);
   }
 
   async updateMemory(
