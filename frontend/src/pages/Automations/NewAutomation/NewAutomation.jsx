@@ -123,7 +123,7 @@ export default function NewAutomation() {
       </ul>
       <div className="tab-content px-3 mb-3" id="tabContent">
         <div
-          className="tab-pane fade show active"
+          className="tab-pane fade show active pt-3"
           id="openCondition"
           role="tabpanel"
         >
@@ -150,7 +150,7 @@ export default function NewAutomation() {
             </div>
           </div>
         </div>
-        <div className="tab-pane fade" id="closeCondition" role="tabpanel">
+        <div className="tab-pane fade pt-3" id="closeCondition" role="tabpanel">
           <label htmlFor="openCondition">Fechar Condição:</label>
           <ConditionsArea
             id="closeCondition"

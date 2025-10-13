@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import SmartBadge from "../../../components/SmartBadge";
 
 /**
  * props:
@@ -11,6 +12,11 @@ import { useState, useEffect } from "react";
  */
 export default function ConditionsArea(props) {
   const [conditions, setConditions] = useState([]); //{ eval: "", text: "" }
+  const [selectedIndex, setSelectedIndex] = useState({ example: 0 });
+
+  useEffect(() => {
+    setSelectedIndex({ example: 0 });
+  }, [props.symbol]);
 
   function parseConditions(conditionsText) {
     if (!conditionsText) return [];
@@ -29,7 +35,43 @@ export default function ConditionsArea(props) {
 
       let evalCondition = item.trim();
 
+      if (props.automationId) {
+        text = text.replaceAll(
+          "AUTO_ORDER_X",
+          "AUTO_ORDER_" + props.automationId
+        );
+        evalCondition = evalCondition.replaceAll(
+          "AUTO_ORDER_X",
+          "AUTO_ORDER_" + props.automationId
+        );
+      }
+
       return { eval: evalCondition, text };
+    });
+  }
+
+  function btnRemoveConditionClick(event) {
+    const id = event.target.id;
+    const pos = conditions.findIndex((c) => c.eval === id);
+    conditions.splice(pos, 1);
+    props.onChange({
+      target: {
+        id: props.id,
+        value: conditions.map((c) => c.eval).join(" && "),
+      },
+    });
+  }
+
+  function btnAddConditionClick(event) {
+    const parsedCondition = parseConditions(event.target.value.eval)[0];
+    if (conditions.some((c) => c.eval === parsedCondition.eval)) return;
+
+    conditions.push(parseConditions);
+    props.onChange({
+      target: {
+        id: props.id,
+        value: conditions.map((c) => c.eval).join(" && "),
+      },
     });
   }
 
@@ -38,5 +80,27 @@ export default function ConditionsArea(props) {
     setConditions(parsedConditions);
   }, [props.conditions]);
 
-  return <div>{JSON.stringify(conditions)}</div>;
+  return (
+    <>
+      <div className="row">
+        <div className="col-6">Área de Condições</div>
+      </div>
+      {conditions ? (
+        <div className="divScrollBadges">
+          <div className="d-inline-flex flex-row align-content-start">
+            {conditions.map((condition, ix) => (
+              <SmartBadge
+                key={ix}
+                id={condition.eval}
+                text={condition.text}
+                onClick={btnRemoveConditionClick}
+              />
+            ))}
+          </div>
+        </div>
+      ) : (
+        <></>
+      )}
+    </>
+  );
 }
