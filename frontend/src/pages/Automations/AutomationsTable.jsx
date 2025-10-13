@@ -1,7 +1,13 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import { getAutomations } from "../../services/AutomationsService";
+import {
+  deleteAutomation,
+  getAutomations,
+  startAutomation,
+  stopAutomation,
+} from "../../services/AutomationsService";
 import Pagination from "../../components/Pagination";
+import AutomationRow from "./AutomationRow";
 
 export default function AutomationsTable() {
   const defaultLocation = useLocation();
@@ -38,32 +44,44 @@ export default function AutomationsTable() {
 
   function onStopClick(event) {
     const id = event.target.id.replace("stop", "");
-    // stopMonitor(id)
-    //     .then(monitor => { window.location.reload() })
-    //     .catch(err => {
-    //         console.error(err.response ? err.response.data : err);
-    //         setMessage(err.response ? JSON.stringify(err.response.data) : err.message);
-    //     });
+    stopAutomation(id)
+      .then((automation) => {
+        window.location.reload();
+      })
+      .catch((err) => {
+        console.error(err.response ? err.response.data : err);
+        setMessage(
+          err.response ? JSON.stringify(err.response.data) : err.message
+        );
+      });
   }
 
   function onStartClick(event) {
     const id = event.target.id.replace("start", "");
-    // startMonitor(id)
-    //     .then(monitor => { window.location.reload() })
-    //     .catch(err => {
-    //         console.error(err.response ? err.response.data : err);
-    //         setMessage(err.response ? JSON.stringify(err.response.data) : err.message);
-    //     });
+    startAutomation(id)
+      .then((automation) => {
+        window.location.reload();
+      })
+      .catch((err) => {
+        console.error(err.response ? err.response.data : err);
+        setMessage(
+          err.response ? JSON.stringify(err.response.data) : err.message
+        );
+      });
   }
 
   function onDeleteClick(event) {
     const id = event.target.id.replace("delete", "");
-    // deleteMonitor(id)
-    //     .then(monitor => { window.location.reload() })
-    //     .catch(err => {
-    //         console.error(err.response ? err.response.data : err);
-    //         setMessage(err.response ? JSON.stringify(err.response.data) : err.message);
-    //     });
+    deleteAutomation(id)
+      .then((automation) => {
+        window.location.reload();
+      })
+      .catch((err) => {
+        console.error(err.response ? err.response.data : err);
+        setMessage(
+          err.response ? JSON.stringify(err.response.data) : err.message
+        );
+      });
   }
 
   return (
@@ -79,19 +97,21 @@ export default function AutomationsTable() {
           </tr>
         </thead>
         <tbody>
-          {/* {
-                        !message
-                            ? automations.map(monitor => (
-                                <MonitorRow
-                                    key={monitor.id}
-                                    data={monitor}
-                                    onStopClick={onStopClick}
-                                    onStartClick={onStartClick}
-                                    onDeleteClick={onDeleteClick} />
-                            ))
-                            : <tr><td colSpan={4}>{message}</td></tr>
-                    } */}
-          {JSON.stringify(automations)}
+          {!message ? (
+            automations.map((automation) => (
+              <AutomationRow
+                key={automation.id}
+                data={automation}
+                onStopClick={onStopClick}
+                onStartClick={onStartClick}
+                onDeleteClick={onDeleteClick}
+              />
+            ))
+          ) : (
+            <tr>
+              <td colSpan={5}>{message}</td>
+            </tr>
+          )}
         </tbody>
       </table>
       <Pagination count={count} />

@@ -8,6 +8,7 @@ import ViewOrder from "./pages/Orders/ViewOrder";
 import Monitors from "./pages/Monitors/Monitors";
 import NewMonitor from "./pages/Monitors/NewMonitor";
 import Automations from "./pages/Automations/Automations";
+import NewAutomation from "./pages/Automations/NewAutomation/NewAutomation";
 
 function Router() {
   function PrivateRoute({ children }) {
@@ -48,6 +49,22 @@ function Router() {
           element={
             <PrivateRoute>
               <Orders />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/automations/edit/:id"
+          element={
+            <PrivateRoute>
+              <NewAutomation />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/automations/new"
+          element={
+            <PrivateRoute>
+              <NewAutomation />
             </PrivateRoute>
           }
         />
