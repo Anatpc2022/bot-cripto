@@ -128,7 +128,14 @@ export default function NewAutomation() {
           role="tabpanel"
         >
           <label htmlFor="openCondition">Abrir Condição:</label>
-          <ConditionsArea />
+          <ConditionsArea
+            id="openCondition"
+            symbol={automation.symbol}
+            conditions={automation.openCondition}
+            indexes={indexes}
+            automationId={id}
+            onChange={onInputChange}
+          />
           <div className="row">
             <div className="col-6 mb-3">
               <div className="form-group">
@@ -145,7 +152,14 @@ export default function NewAutomation() {
         </div>
         <div className="tab-pane fade" id="closeCondition" role="tabpanel">
           <label htmlFor="openCondition">Fechar Condição:</label>
-          <ConditionsArea />
+          <ConditionsArea
+            id="closeCondition"
+            symbol={automation.symbol}
+            conditions={automation.closeCondition}
+            indexes={indexes}
+            automationId={id}
+            onChange={onInputChange}
+          />
           <div className="row">
             <div className="col-6 mb-3">
               <div className="form-group">
