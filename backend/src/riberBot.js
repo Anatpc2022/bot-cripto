@@ -577,4 +577,24 @@ export default class RiberBot {
     const memoryKey = this.buildMemoryKey(symbol, index, interval);
     return this.cache.unset(memoryKey);
   }
+
+  async getMemoryIndexes() {
+    const MEMORY = await this.getMemory();
+    return Object.entries(MEMORY)
+      .map((prop) => {
+        if (prop[0].indexOf("previous") !== -1 || prop[0].indexOf(":") === -1)
+          return false;
+        const propSplit = prop[0].split(":"); //BTCUSDT, TICKER
+        return {
+          symbol: propSplit[0],
+          variable: propSplit[1].replace(".current", ""),
+          eval: prop[0], //incompleto
+          example: prop[1],
+        };
+      })
+      .filter((ix) => ix)
+      .sort((a, b) => {
+        return a.variable < b.variable ? -1 : 1;
+      });
+  }
 }

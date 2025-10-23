@@ -3,6 +3,8 @@ const router = express.Router();
 
 import riberBotController from "../controllers/riberBotController.js";
 
+router.get("/memory/indexes", riberBotController.getMemoryIndexes);
+
 router.patch("/memory/:index", riberBotController.updateMemory);
 
 router.get("/memory", riberBotController.getMemory);
