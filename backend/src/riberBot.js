@@ -578,17 +578,45 @@ export default class RiberBot {
     return this.cache.unset(memoryKey);
   }
 
+  flattenObject(obj) {
+    let toReturn = {};
+
+    for (let prop in obj) {
+      if (!obj.hasOwnProperty(prop)) continue;
+
+      if (typeof obj[prop] == "object" && obj[prop] !== null) {
+        let flatObject = this.flattenObject(obj[prop]);
+        for (let innerProp in flatObject) {
+          if (!flatObject.hasOwnProperty(innerProp)) continue;
+          toReturn[prop + "." + innerProp] = flatObject[innerProp];
+        }
+      } else toReturn[prop] = obj[prop];
+    }
+
+    return toReturn;
+  }
+
+  getEval(prop) {
+    if (prop.indexOf("MEMORY") !== -1) return prop;
+    if (prop.indexOf(".") === -1) return `MEMORY['${prop}']`;
+
+    const propSplit = prop.split(".");
+    const memKey = propSplit[0];
+    const memProp = prop.replace(memKey, "");
+    return `MEMORY['${memKey}']${memProp}`;
+  }
+
   async getMemoryIndexes() {
     const MEMORY = await this.getMemory();
-    return Object.entries(MEMORY)
+    return Object.entries(this.flattenObject(MEMORY))
       .map((prop) => {
         if (prop[0].indexOf("previous") !== -1 || prop[0].indexOf(":") === -1)
           return false;
-        const propSplit = prop[0].split(":"); //BTCUSDT, TICKER
+        const propSplit = prop[0].split(":");
         return {
           symbol: propSplit[0],
           variable: propSplit[1].replace(".current", ""),
-          eval: prop[0], //incompleto
+          eval: this.getEval(prop[0]),
           example: prop[1],
         };
       })
