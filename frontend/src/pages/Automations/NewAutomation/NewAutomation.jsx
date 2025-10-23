@@ -11,6 +11,7 @@ import ConditionsArea from "./ConditionsArea";
 import SelectOrderTemplate from "./SelectOrderTemplate";
 import { getSymbol } from "../../../services/SymbolsService";
 import {
+  getAutoOrderIndexes,
   getIndexes,
   getLastOrderIndexes,
 } from "../../../services/RiberBotService";
@@ -64,6 +65,22 @@ export default function NewAutomation() {
       });
     }
 
+    function getWalletIndexes(indexes, symbol) {
+      const walletIndexes = [];
+
+      const baseWallet = indexes.find(
+        (ix) => ix.variable.startsWith("WALLET_") && symbol.base === ix.symbol
+      );
+      if (baseWallet) walletIndexes.push(baseWallet);
+
+      const quoteWallet = indexes.find(
+        (ix) => ix.variable.startsWith("WALLET_") && symbol.quote === ix.symbol
+      );
+      if (quoteWallet) walletIndexes.push(quoteWallet);
+
+      return walletIndexes;
+    }
+
     getIndexes()
       .then((indexes) => {
         let filteredIndexes = indexes.filter(
@@ -73,7 +90,13 @@ export default function NewAutomation() {
         const lastOrderIndexes = getLastOrderIndexes(automation.symbol);
         filteredIndexes.push(...lastOrderIndexes);
 
+        const autoOrderIndexes = getAutoOrderIndexes(id, automation.symbol);
+        filteredIndexes.push(...autoOrderIndexes);
+
         filteredIndexes = removeRepeatedAndSort(filteredIndexes);
+
+        const walletIndexes = getWalletIndexes(indexes, symbol);
+        filteredIndexes.splice(0, 0, ...walletIndexes);
 
         setIndexes(filteredIndexes);
       })

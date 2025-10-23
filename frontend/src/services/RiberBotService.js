@@ -14,6 +14,67 @@ export async function getIndexes() {
   return response.data;
 }
 
+export function getAutoOrderIndexes(automationId, symbol) {
+  return [
+    {
+      symbol,
+      variable: `AUTO_ORDER_${automationId || "X"}.avgPrice`,
+      eval: `MEMORY['${symbol}:AUTO_ORDER_${automationId || "X"}'].avgPrice`,
+      example: 1000,
+    },
+    {
+      symbol,
+      variable: `AUTO_ORDER_${automationId || "X"}.limitPrice`,
+      eval: `MEMORY['${symbol}:AUTO_ORDER_${automationId || "X"}'].limitPrice`,
+      example: 1000,
+    },
+    {
+      symbol,
+      variable: `AUTO_ORDER_${automationId || "X"}.net`,
+      eval: `MEMORY['${symbol}:AUTO_ORDER_${automationId || "X"}'].net`,
+      example: 1000,
+    },
+    {
+      symbol,
+      variable: `AUTO_ORDER_${automationId || "X"}.quantity`,
+      eval: `MEMORY['${symbol}:AUTO_ORDER_${automationId || "X"}'].quantity`,
+      example: 1,
+    },
+    {
+      symbol,
+      variable: `AUTO_ORDER_${automationId || "X"}.stopPrice`,
+      eval: `MEMORY['${symbol}:AUTO_ORDER_${automationId || "X"}'].stopPrice`,
+      example: 1000,
+    },
+    {
+      symbol,
+      variable: `AUTO_ORDER_${automationId || "X"}.trailingDelta`,
+      eval: `MEMORY['${symbol}:AUTO_ORDER_${
+        automationId || "X"
+      }'].trailingDelta`,
+      example: 50,
+    },
+    {
+      symbol,
+      variable: `AUTO_ORDER_${automationId || "X"}.side`,
+      eval: `MEMORY['${symbol}:AUTO_ORDER_${automationId || "X"}'].side`,
+      example: "BUY",
+    },
+    {
+      symbol,
+      variable: `AUTO_ORDER_${automationId || "X"}.status`,
+      eval: `MEMORY['${symbol}:AUTO_ORDER_${automationId || "X"}'].status`,
+      example: "FILLED",
+    },
+    {
+      symbol,
+      variable: `AUTO_ORDER_${automationId || "X"}.type`,
+      eval: `MEMORY['${symbol}:AUTO_ORDER_${automationId || "X"}'].type`,
+      example: "MARKET",
+    },
+  ];
+}
+
 export function getLastOrderIndexes(symbol) {
   const userId = localStorage.getItem("id");
 

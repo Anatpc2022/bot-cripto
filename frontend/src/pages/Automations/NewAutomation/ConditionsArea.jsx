@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import SmartBadge from "../../../components/SmartBadge";
+import IndexSelect from "./IndexSelect";
 
 /**
  * props:
@@ -80,10 +81,20 @@ export default function ConditionsArea(props) {
     setConditions(parsedConditions);
   }, [props.conditions]);
 
+  function onIndexSelectChange(event) {
+    const item = props.indexes.find((ix) => ix.eval === event.target.value);
+    if (item) setSelectedIndex(item);
+  }
+
   return (
     <>
       <div className="row">
-        <div className="col-6">{JSON.stringify(props.indexes)}</div>
+        <div className="col-6">
+          <IndexSelect
+            indexes={props.indexes || []}
+            onChange={onIndexSelectChange}
+          />
+        </div>
       </div>
       {conditions ? (
         <div className="divScrollBadges">
