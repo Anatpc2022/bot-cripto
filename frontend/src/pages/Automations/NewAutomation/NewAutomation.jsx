@@ -9,6 +9,11 @@ import {
 } from "../../../services/AutomationsService";
 import ConditionsArea from "./ConditionsArea";
 import SelectOrderTemplate from "./SelectOrderTemplate";
+import { getSymbol } from "../../../services/SymbolsService";
+import {
+  getIndexes,
+  getLastOrderIndexes,
+} from "../../../services/RiberBotService";
 
 export default function NewAutomation() {
   const navigate = useNavigate();
@@ -33,6 +38,52 @@ export default function NewAutomation() {
   const [message, setMessage] = useState("");
   const [symbol, setSymbol] = useState({});
   const [indexes, setIndexes] = useState([]);
+
+  useEffect(() => {
+    if (!automation.symbol) return;
+    getSymbol(automation.symbol.toUpperCase())
+      .then((symbolObj) => setSymbol(symbolObj))
+      .catch((err) => {
+        console.error(err.response ? err.response.data : err);
+        setMessage(
+          err.response ? JSON.stringify(err.response.data) : err.message
+        );
+      });
+  }, [automation.symbol]);
+
+  useEffect(() => {
+    if (!automation || !automation.symbol || !symbol) return;
+
+    function removeRepeatedAndSort(indexes) {
+      indexes = indexes.filter(
+        (item, index, self) =>
+          index === self.findIndex((t) => t.eval === item.eval)
+      );
+      return indexes.sort((a, b) => {
+        return a.variable > b.variable ? 1 : -1;
+      });
+    }
+
+    getIndexes()
+      .then((indexes) => {
+        let filteredIndexes = indexes.filter(
+          (ix) => ix.symbol === automation.symbol
+        );
+
+        const lastOrderIndexes = getLastOrderIndexes(automation.symbol);
+        filteredIndexes.push(...lastOrderIndexes);
+
+        filteredIndexes = removeRepeatedAndSort(filteredIndexes);
+
+        setIndexes(filteredIndexes);
+      })
+      .catch((err) => {
+        console.error(err.response ? err.response.data : err);
+        setMessage(
+          err.response ? JSON.stringify(err.response.data) : err.message
+        );
+      });
+  }, [symbol]);
 
   useEffect(() => {
     if (!id) return;

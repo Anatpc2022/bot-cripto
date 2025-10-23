@@ -8,6 +8,73 @@ export async function getMemory() {
   return response.data;
 }
 
+export async function getIndexes() {
+  const url = RIBERBOT_URL + "/memory/indexes";
+  const response = await axios.get(url);
+  return response.data;
+}
+
+export function getLastOrderIndexes(symbol) {
+  const userId = localStorage.getItem("id");
+
+  return [
+    {
+      symbol,
+      variable: `LAST_ORDER_${userId}.avgPrice`,
+      eval: `MEMORY['${symbol}:LAST_ORDER_${userId}'].avgPrice`,
+      example: 1000,
+    },
+    {
+      symbol,
+      variable: `LAST_ORDER_${userId}.limitPrice`,
+      eval: `MEMORY['${symbol}:LAST_ORDER_${userId}'].limitPrice`,
+      example: 1000,
+    },
+    {
+      symbol,
+      variable: `LAST_ORDER_${userId}.net`,
+      eval: `MEMORY['${symbol}:LAST_ORDER_${userId}'].net`,
+      example: 1000,
+    },
+    {
+      symbol,
+      variable: `LAST_ORDER_${userId}.quantity`,
+      eval: `MEMORY['${symbol}:LAST_ORDER_${userId}'].quantity`,
+      example: 1,
+    },
+    {
+      symbol,
+      variable: `LAST_ORDER_${userId}.stopPrice`,
+      eval: `MEMORY['${symbol}:LAST_ORDER_${userId}'].stopPrice`,
+      example: 1000,
+    },
+    {
+      symbol,
+      variable: `LAST_ORDER_${userId}.trailingDelta`,
+      eval: `MEMORY['${symbol}:LAST_ORDER_${userId}'].trailingDelta`,
+      example: 50,
+    },
+    {
+      symbol,
+      variable: `LAST_ORDER_${userId}.side`,
+      eval: `MEMORY['${symbol}:LAST_ORDER_${userId}'].side`,
+      example: "BUY",
+    },
+    {
+      symbol,
+      variable: `LAST_ORDER_${userId}.status`,
+      eval: `MEMORY['${symbol}:LAST_ORDER_${userId}'].status`,
+      example: "FILLED",
+    },
+    {
+      symbol,
+      variable: `LAST_ORDER_${userId}.type`,
+      eval: `MEMORY['${symbol}:LAST_ORDER_${userId}'].type`,
+      example: "MARKET",
+    },
+  ];
+}
+
 export async function getBrain() {
   const url = RIBERBOT_URL + "/brain";
   const response = await axios.get(url);

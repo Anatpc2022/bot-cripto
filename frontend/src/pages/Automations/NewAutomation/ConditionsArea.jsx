@@ -83,7 +83,7 @@ export default function ConditionsArea(props) {
   return (
     <>
       <div className="row">
-        <div className="col-6">Área de Condições</div>
+        <div className="col-6">{JSON.stringify(props.indexes)}</div>
       </div>
       {conditions ? (
         <div className="divScrollBadges">
