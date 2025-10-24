@@ -49,9 +49,7 @@ export default function MonitorIndex(props) {
 
   function onAddIndexClick() {
     if (selectedIndex === "NONE") return;
-    const params = selectedIndex.value
-      ? "_" + selectedIndex.value.replaceAll(",", "_")
-      : "";
+    const params = selectedIndex.value ? "_" + selectedIndex.value : "";
     indexes.push(selectedIndex.index + params);
     setIndexes(indexes);
     props.onChange({ target: { id: "indexes", value: indexes.join(",") } });
@@ -70,7 +68,7 @@ export default function MonitorIndex(props) {
     <>
       <div className="row mb-3">
         <div className="form-group">
-          <label>Indicadores:</label>
+          <label>Indexes:</label>
           <div className="input-group input-group-merge">
             <select
               id="index"
@@ -78,7 +76,7 @@ export default function MonitorIndex(props) {
               onChange={onIndexChange}
               value={selectedIndex.index}
             >
-              <option value="NONE">Nenhum</option>
+              <option value="NONE">None</option>
               {Object.keys(analysis)
                 .sort((a, b) => (a > b ? 1 : -1))
                 .map((k) => (
@@ -106,7 +104,6 @@ export default function MonitorIndex(props) {
                 stroke="currentColor"
                 viewBox="0 0 24 24"
                 xmlns="http://www.w3.org/2000/svg"
-                aria-hidden="true"
               >
                 <path
                   strokeLinecap="round"

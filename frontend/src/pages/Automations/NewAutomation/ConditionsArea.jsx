@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import SmartBadge from "../../../components/SmartBadge";
 import IndexSelect from "./IndexSelect";
+import VariableInput from "./VariableInput";
 
 /**
  * props:
@@ -93,6 +94,12 @@ export default function ConditionsArea(props) {
           <IndexSelect
             indexes={props.indexes || []}
             onChange={onIndexSelectChange}
+          />
+          <VariableInput
+            symbol={props.symbol}
+            indexes={props.indexes || []}
+            onAddClick={btnAddConditionClick}
+            selectedIndex={selectedIndex}
           />
         </div>
       </div>
