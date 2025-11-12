@@ -68,7 +68,7 @@ export default function ConditionsArea(props) {
     const parsedCondition = parseConditions(event.target.value.eval)[0];
     if (conditions.some((c) => c.eval === parsedCondition.eval)) return;
 
-    conditions.push(parseConditions);
+    conditions.push(parsedCondition);
     props.onChange({
       target: {
         id: props.id,

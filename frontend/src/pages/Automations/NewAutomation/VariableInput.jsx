@@ -26,11 +26,56 @@ export default function VariableInput(props) {
     setOperator(event.target.value);
   }
 
-  function onVariableChange(event) {}
+  function onVariableChange(option) {
+    const value = option.value;
+    setOption(option);
 
-  function getVariables() {}
+    setVariable(value);
+  }
 
-  function onAddClick() {}
+  function getOptionText(symbol, variable) {
+    return variable.startsWith("WALLET_") ? `${symbol}:${variable}` : variable;
+  }
+
+  function getVariables() {
+    let options = [];
+    if (props.indexes && Array.isArray(props.indexes)) {
+      options = props.indexes
+        .filter((ix) => ix.eval !== index.eval)
+        .map((item) => {
+          return {
+            label: getOptionText(item.symbol, item.variable),
+            value: getOptionText(item.symbol, item.variable),
+          };
+        });
+    }
+
+    //adicionar variáveis personalizadas
+
+    return options;
+  }
+
+  function getExpressionText() {
+    const value =
+      typeof index.example === "string" ? `'${variable}'` : variable;
+    return `${index.symbol}:${index.variable} ${operator.replace(
+      "==",
+      "="
+    )} ${value}`;
+  }
+
+  function onAddClick() {
+    const value =
+      typeof index.example === "string" ? `'${variable}'` : variable;
+    const condition = {
+      eval: `${index.eval}${operator}${value}`,
+      text: getExpressionText(),
+    };
+    props.onAddClick({ target: { id: "condition", value: condition } });
+
+    setOperator("==");
+    setVariable("");
+  }
 
   const customStyles = {
     control: (baseStyles, state) => ({
