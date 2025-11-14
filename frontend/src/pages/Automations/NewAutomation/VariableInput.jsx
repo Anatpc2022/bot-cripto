@@ -26,11 +26,24 @@ export default function VariableInput(props) {
     setOperator(event.target.value);
   }
 
+  function getValueExpression(value) {
+    const firstDotIndex = value.indexOf(".");
+    return value.substring(firstDotIndex + 1);
+  }
+
   function onVariableChange(option) {
     const value = option.value;
     setOption(option);
 
-    setVariable(value);
+    const index = props.indexes.find((ix) => value.endsWith(ix.variable));
+    if (index && value.indexOf("WALLET_") === -1) setVariable(index.eval);
+    else if (/[\+\-\*\/]/.test(value))
+      setVariable(
+        `(MEMORY['${props.symbol}:${value.split(".")[0]}'].${getValueExpression(
+          value
+        )})`
+      );
+    else setVariable(value);
   }
 
   function getOptionText(symbol, variable) {
@@ -50,7 +63,29 @@ export default function VariableInput(props) {
         });
     }
 
-    //adicionar variáveis personalizadas
+    const userId = localStorage.getItem("id");
+    options.push(
+      ...[
+        {
+          value: getOptionText(
+            props.symbol,
+            `LAST_ORDER_${userId}.avgPrice*1.01`
+          ),
+          label: `LAST_ORDER_${userId}.avgPrice + 1%`,
+        },
+        {
+          value: getOptionText(
+            props.symbol,
+            `LAST_ORDER_${userId}.avgPrice*0.95`
+          ),
+          label: `LAST_ORDER_${userId}.avgPrice - 5%`,
+        },
+        {
+          value: getOptionText(props.symbol, `TICKER.current.open*1.1`),
+          label: `TICKER.open + 10%`,
+        },
+      ]
+    );
 
     return options;
   }
