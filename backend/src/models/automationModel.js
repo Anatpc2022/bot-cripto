@@ -1,5 +1,6 @@
 import Sequelize from "sequelize";
 import database from "../db.js";
+import OrderTemplateModel from "./orderTemplateModel.js";
 
 const AutomationModel = database.define("automation", {
   id: {
@@ -65,6 +66,16 @@ const AutomationModel = database.define("automation", {
   },
   createdAt: Sequelize.DATE,
   updatedAt: Sequelize.DATE,
+});
+
+AutomationModel.belongsTo(OrderTemplateModel, {
+  foreignKey: "openTemplateId",
+  as: "openTemplate",
+});
+
+AutomationModel.belongsTo(OrderTemplateModel, {
+  foreignKey: "closeTemplateId",
+  as: "closeTemplate",
 });
 
 export default AutomationModel;
