@@ -120,6 +120,29 @@ export default function NewAutomation() {
       });
   }, [id]);
 
+  function parseIndexes(conditions) {
+    const conditionsArr = conditions.split("&&");
+    const indexesStr = conditionsArr
+      .map((condition) => {
+        const memoryIndexes = condition
+          .split(/[=><!]/)
+          .filter((str) => /MEMORY/.test(str))
+          .map((str) => str.split(".")[0].trim());
+        return memoryIndexes.join(",");
+      })
+      .join(",");
+
+    return [
+      ...new Set(
+        indexesStr
+          .replaceAll(/\(?MEMORY\[\'/g, "")
+          .replaceAll(/\'\]\)?/g, "")
+          .replaceAll(".current", "")
+          .split(",")
+      ),
+    ].join(",");
+  }
+
   function onInputChange(event) {
     setAutomation((prevState) => ({
       ...prevState,
@@ -128,6 +151,12 @@ export default function NewAutomation() {
   }
 
   function btnSaveClick() {
+    if (automation.openCondition)
+      automation.openIndexes = parseIndexes(automation.openCondition);
+
+    if (automation.closeCondition)
+      automation.closeIndexes = parseIndexes(automation.closeCondition);
+
     saveAutomation(automation.id, automation)
       .then((result) => navigate("/automations"))
       .catch((err) => {
