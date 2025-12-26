@@ -114,6 +114,13 @@ function getAllOrderTemplates(userId, symbol) {
   return OrderTemplateModel.findAll(options);
 }
 
+async function orderTemplateExists(userId, name, symbol) {
+  const count = await OrderTemplateModel.count({
+    where: { userId, name, symbol },
+  });
+  return count > 0;
+}
+
 export default {
   getAllOrderTemplates,
   getOrderTemplate,
@@ -121,4 +128,5 @@ export default {
   updateOrderTemplate,
   deleteOrderTemplate,
   insertOrderTemplate,
+  orderTemplateExists,
 };

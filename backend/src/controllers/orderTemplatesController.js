@@ -1,4 +1,23 @@
 import orderTemplatesRepository from "../repositories/orderTemplatesRepository.js";
+import automationsRepository from "../repositories/automationsRepository.js";
+import RiberBot from "../riberBot.js";
+
+function validatePrice(price) {
+  if (!price) return true;
+  if (parseFloat(price)) return true;
+  return /^((TICKER|AUTO_ORDER|LAST_ORDER|LAST_CANDLE)_.+)$/.test(price);
+}
+
+function validateQuantity(quantity) {
+  if (parseFloat(quantity)) return true;
+  return [
+    "AUTO_ORDER_QTY",
+    "QUOTE_QTY",
+    "LAST_ORDER_QTY",
+    "MIN_NOTIONAL",
+    "MAX_WALLET",
+  ].includes(quantity);
+}
 
 async function getOrderTemplate(req, res) {
   const userId = res.locals.token.id;
@@ -28,7 +47,32 @@ async function insertOrderTemplate(req, res) {
   const newOrderTemplate = req.body;
   newOrderTemplate.userId = userId;
 
-  //validar order template
+  const alreadyExists = await orderTemplatesRepository.orderTemplateExists(
+    userId,
+    newOrderTemplate.name,
+    newOrderTemplate.symbol
+  );
+  if (alreadyExists)
+    return res
+      .status(409)
+      .send(`Já existe um modelo de pedido com esses parâmetros.`);
+
+  newOrderTemplate.limitPrice = newOrderTemplate.limitPrice
+    ? newOrderTemplate.limitPrice.replace(",", ".")
+    : newOrderTemplate.limitPrice;
+  newOrderTemplate.stopPrice = newOrderTemplate.stopPrice
+    ? newOrderTemplate.stopPrice.replace(",", ".")
+    : newOrderTemplate.stopPrice;
+  newOrderTemplate.quantity = newOrderTemplate.quantity
+    ? newOrderTemplate.quantity.replace(",", ".")
+    : newOrderTemplate.quantity;
+
+  if (
+    !validatePrice(newOrderTemplate.limitPrice) ||
+    !validatePrice(newOrderTemplate.stopPrice) ||
+    !validateQuantity(newOrderTemplate.quantity)
+  )
+    return res.status(422).send(`Preço e/ou quantidade inválidos`);
 
   const orderTemplate = await orderTemplatesRepository.insertOrderTemplate(
     newOrderTemplate
@@ -49,13 +93,35 @@ async function updateOrderTemplate(req, res) {
   if (!currentOrderTemplate) return res.sendStatus(404);
   if (currentOrderTemplate.userId !== userId) return res.sendStatus(403);
 
+  newOrderTemplate.limitPrice = newOrderTemplate.limitPrice
+    ? newOrderTemplate.limitPrice.replace(",", ".")
+    : newOrderTemplate.limitPrice;
+  newOrderTemplate.stopPrice = newOrderTemplate.stopPrice
+    ? newOrderTemplate.stopPrice.replace(",", ".")
+    : newOrderTemplate.stopPrice;
+  newOrderTemplate.quantity = newOrderTemplate.quantity
+    ? newOrderTemplate.quantity.replace(",", ".")
+    : newOrderTemplate.quantity;
+
+  if (
+    !validatePrice(newOrderTemplate.limitPrice) ||
+    !validatePrice(newOrderTemplate.stopPrice) ||
+    !validateQuantity(newOrderTemplate.quantity)
+  )
+    return res.status(422).send(`Preço e/ou quantidade inválidos`);
+
   const orderTemplate = await orderTemplatesRepository.updateOrderTemplate(
     userId,
     id,
     newOrderTemplate
   );
 
-  //atualizar no cérebro do beholder
+  const automations =
+    await automationsRepository.getActiveAutomationsByOrderTemplateId(id);
+  if (automations && automations.length) {
+    const riberBot = RiberBot.getInstance();
+    automations.map((a) => riberBot.updateBrain(a.get({ plain: true })));
+  }
 
   res.json(orderTemplate.get({ plain: true }));
 }
@@ -65,12 +131,17 @@ async function deleteOrderTemplate(req, res) {
   const id = req.params.id;
 
   const currentOrderTemplate = await orderTemplatesRepository.getOrderTemplate(
-    userId, id
+    id
   );
   if (!currentOrderTemplate) return res.sendStatus(404);
   if (currentOrderTemplate.userId !== userId) return res.sendStatus(403);
 
-  //validação
+  const automations =
+    await automationsRepository.getAutomationsByOrderTemplateId(id);
+  if (automations && automations.length)
+    return res
+      .status(409)
+      .send(`Existem automações que utilizam este modelo de pedido.`);
 
   await orderTemplatesRepository.deleteOrderTemplate(userId, id);
   res.sendStatus(204);

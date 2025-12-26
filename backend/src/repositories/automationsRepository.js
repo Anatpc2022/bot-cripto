@@ -1,3 +1,4 @@
+import { Op } from "sequelize";
 import automationModel from "../models/automationModel.js";
 
 const automationTypes = {
@@ -107,6 +108,39 @@ async function updateAutomation(id, newAutomation) {
   return currentAutomation;
 }
 
+async function getActiveAutomationsByOrderTemplateId(orderTemplateId) {
+  return automationModel.findAll({
+    where: {
+      isActive: true,
+      [Op.or]: [
+        {
+          openTemplateId: orderTemplateId,
+        },
+        {
+          closeTemplateId: orderTemplateId,
+        },
+      ],
+    },
+    include: [{ all: true, nested: true }],
+  });
+}
+
+async function getAutomationsByOrderTemplateId(orderTemplateId) {
+  return automationModel.findAll({
+    where: {
+      [Op.or]: [
+        {
+          openTemplateId: orderTemplateId,
+        },
+        {
+          closeTemplateId: orderTemplateId,
+        },
+      ],
+    },
+    include: [{ all: true, nested: true }],
+  });
+}
+
 export default {
   automationTypes,
   automationExists,
@@ -116,4 +150,6 @@ export default {
   updateAutomation,
   getAutomations,
   getActiveAutomations,
+  getActiveAutomationsByOrderTemplateId,
+  getAutomationsByOrderTemplateId,
 };
