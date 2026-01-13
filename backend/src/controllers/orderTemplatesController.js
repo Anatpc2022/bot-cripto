@@ -106,7 +106,7 @@ async function updateOrderTemplate(req, res) {
   if (
     !validatePrice(newOrderTemplate.limitPrice) ||
     !validatePrice(newOrderTemplate.stopPrice) ||
-    !validateQuantity(newOrderTemplate.quantity)
+    (newOrderTemplate.quantity && !validateQuantity(newOrderTemplate.quantity))
   )
     return res.status(422).send(`Preço e/ou quantidade inválidos`);
 
@@ -131,6 +131,7 @@ async function deleteOrderTemplate(req, res) {
   const id = req.params.id;
 
   const currentOrderTemplate = await orderTemplatesRepository.getOrderTemplate(
+    userId,
     id
   );
   if (!currentOrderTemplate) return res.sendStatus(404);

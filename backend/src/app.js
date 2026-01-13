@@ -14,6 +14,7 @@ import symbolsRouter from "./routers/symbolsRouter.js";
 import ordersRouter from "./routers/ordersRouter.js";
 import monitorsRouter from "./routers/monitorsRouter.js";
 import automationsRouter from "./routers/automationsRouter.js";
+import orderTemplatesRouter from "./routers/orderTemplatesRouter.js";
 
 const app = express();
 
@@ -44,6 +45,8 @@ app.use("/orders", authMiddleware, ordersRouter);
 app.use("/monitors", authMiddleware, monitorsRouter);
 
 app.use("/automations", authMiddleware, automationsRouter);
+
+app.use("/ordertemplates", authMiddleware, orderTemplatesRouter);
 
 app.use("/", (req, res, next) => {
   res.send("Hello World!");
