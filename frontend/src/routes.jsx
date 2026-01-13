@@ -10,6 +10,7 @@ import NewMonitor from "./pages/Monitors/NewMonitor";
 import Automations from "./pages/Automations/Automations";
 import NewAutomation from "./pages/Automations/NewAutomation/NewAutomation";
 import OrderTemplates from "./pages/OrderTemplates/OrderTemplates";
+import NewOrderTemplate from "./pages/OrderTemplates/NewOrderTemplate";
 
 function Router() {
   function PrivateRoute({ children }) {
@@ -50,6 +51,22 @@ function Router() {
           element={
             <PrivateRoute>
               <Orders />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/ordertemplates/edit/:id"
+          element={
+            <PrivateRoute>
+              <NewOrderTemplate />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/ordertemplates/new"
+          element={
+            <PrivateRoute>
+              <NewOrderTemplate />
             </PrivateRoute>
           }
         />
