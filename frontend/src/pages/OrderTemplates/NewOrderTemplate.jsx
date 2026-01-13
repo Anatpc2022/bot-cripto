@@ -11,6 +11,7 @@ import SelectSide from "../../components/SelectSide";
 import OrderType from "../../components/OrderType";
 import { MARKET_TYPES, STOP_TYPES } from "../../services/ExchangeService";
 import PriceTemplate from "./PriceTemplate";
+import QuantityTemplate from "./QuantityTemplate";
 
 export default function NewOrderTemplate() {
   const navigate = useNavigate();
@@ -160,7 +161,15 @@ export default function NewOrderTemplate() {
         <></>
       )}
       <div className="row mb-4">
-        <div className="col-6">Quantidade</div>
+        <div className="col-6">
+          <QuantityTemplate
+            id="quantity"
+            text="Quantidade:"
+            quantity={orderTemplate.quantity}
+            multiplier={orderTemplate.quantityMultiplier}
+            onChange={onInputChange}
+          />
+        </div>
       </div>
       <div className="row">
         <div className="col-3">
