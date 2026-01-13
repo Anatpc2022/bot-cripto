@@ -10,6 +10,7 @@ import SymbolInfo from "../../components/SymbolInfo";
 import SelectSide from "../../components/SelectSide";
 import OrderType from "../../components/OrderType";
 import { MARKET_TYPES, STOP_TYPES } from "../../services/ExchangeService";
+import PriceTemplate from "./PriceTemplate";
 
 export default function NewOrderTemplate() {
   const navigate = useNavigate();
@@ -110,9 +111,25 @@ export default function NewOrderTemplate() {
       {isStopOrder(orderTemplate.type) ? (
         <>
           <div className="row mb-3">
-            <div className="col-6">Preço de parada</div>
+            <div className="col-6">
+              <PriceTemplate
+                id="stopPrice"
+                text="Preço de Parada:"
+                symbol={orderTemplate.symbol}
+                onChange={onInputChange}
+                price={orderTemplate.stopPrice}
+                multiplier={orderTemplate.stopPriceMultiplier}
+              />
+            </div>
             <div className="col-2">
-              <label htmlFor="trailingDelta">Trailing Delta (BIPS):</label>
+              <label
+                htmlFor="trailingDelta"
+                data-bs-toggle="tooltip"
+                data-bs-placement="top"
+                title="Quantidade em BIPS (0,01%) que o preço pode recuar antes da ordem ser acionada."
+              >
+                Trailing Delta (BIPS):
+              </label>
               <input
                 type="number"
                 className="form-control"
@@ -128,7 +145,16 @@ export default function NewOrderTemplate() {
       )}
       {!isMarketOrder(orderTemplate.type) ? (
         <div className="row mb-3">
-          <div className="col-6">Preço limite</div>
+          <div className="col-6">
+            <PriceTemplate
+              id="limitPrice"
+              text="Preço Limite:"
+              symbol={orderTemplate.symbol}
+              onChange={onInputChange}
+              price={orderTemplate.limitPrice}
+              multiplier={orderTemplate.limitPriceMultiplier}
+            />
+          </div>
         </div>
       ) : (
         <></>
