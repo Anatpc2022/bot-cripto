@@ -9,6 +9,7 @@ import Monitors from "./pages/Monitors/Monitors";
 import NewMonitor from "./pages/Monitors/NewMonitor";
 import Automations from "./pages/Automations/Automations";
 import NewAutomation from "./pages/Automations/NewAutomation/NewAutomation";
+import OrderTemplates from "./pages/OrderTemplates/OrderTemplates";
 
 function Router() {
   function PrivateRoute({ children }) {
@@ -49,6 +50,14 @@ function Router() {
           element={
             <PrivateRoute>
               <Orders />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/ordertemplates"
+          element={
+            <PrivateRoute>
+              <OrderTemplates />
             </PrivateRoute>
           }
         />
