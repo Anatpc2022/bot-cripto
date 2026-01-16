@@ -64,8 +64,13 @@ async function updateAutomation(id, newAutomation) {
   if (newAutomation.openCondition !== currentAutomation.openCondition)
     currentAutomation.openCondition = newAutomation.openCondition;
 
-  if (newAutomation.openTemplateId !== currentAutomation.openTemplateId)
-    currentAutomation.openTemplateId = newAutomation.openTemplateId;
+  if (
+    newAutomation.openTemplateId !== undefined &&
+    parseInt(newAutomation.openTemplateId) > 0
+  ) {
+    if (newAutomation.openTemplateId !== currentAutomation.openTemplateId)
+      currentAutomation.openTemplateId = newAutomation.openTemplateId;
+  } else currentAutomation.openTemplateId = null;
 
   if (newAutomation.closeIndexes !== currentAutomation.closeIndexes)
     currentAutomation.closeIndexes = newAutomation.closeIndexes;
@@ -73,8 +78,13 @@ async function updateAutomation(id, newAutomation) {
   if (newAutomation.closeCondition !== currentAutomation.closeCondition)
     currentAutomation.closeCondition = newAutomation.closeCondition;
 
-  if (newAutomation.closeTemplateId !== currentAutomation.closeTemplateId)
-    currentAutomation.closeTemplateId = newAutomation.closeTemplateId;
+  if (
+    newAutomation.closeTemplateId !== undefined &&
+    parseInt(newAutomation.closeTemplateId) > 0
+  ) {
+    if (newAutomation.closeTemplateId !== currentAutomation.closeTemplateId)
+      currentAutomation.closeTemplateId = newAutomation.closeTemplateId;
+  } else currentAutomation.closeTemplateId = null;
 
   if (
     newAutomation.isActive !== null &&
@@ -105,7 +115,7 @@ async function updateAutomation(id, newAutomation) {
     currentAutomation.logs = newAutomation.logs;
 
   await currentAutomation.save();
-  return currentAutomation;
+  return getAutomation(currentAutomation.id);
 }
 
 async function getActiveAutomationsByOrderTemplateId(orderTemplateId) {

@@ -75,13 +75,15 @@ async function updateMemory(req, res) {
   const memoryKey = req.params.index;
   let [symbol, index] = memoryKey.split(":");
 
-  index = index.split("_")[0];
-  const interval = index.split("_")[1];
+  const indexSplit = index.split("_");
+  const interval =
+    indexSplit.length > 1 ? indexSplit[indexSplit.length - 1] : undefined;
+  const indexName = interval ? index.replace("_" + interval, "") : index;
   const value = req.body.data;
 
   let results = await RiberBot.getInstance().updateMemory(
     symbol,
-    index,
+    indexName,
     interval,
     value,
     true

@@ -4,6 +4,7 @@ import indexes from "./utils/indexes.js";
 import usersRepository from "./repositories/usersRepository.js";
 import mailer from "./utils/email.js";
 import telegram from "./utils/telegram.js";
+import automationsRepository from "./repositories/automationsRepository.js";
 
 const LOGS = process.env.RIBERBOT_LOGS === "true";
 const INTERVAL = parseInt(process.env.AUTOMATION_INTERVAL || 0);
@@ -242,6 +243,10 @@ export default class RiberBot {
     return results.flat();
   }
 
+  async placeOrder(user, automation, orderTemplate) {
+    return { type: "success", text: "Ordem realizada com sucesso!" };
+  }
+
   async evalDecision(memoryKey, automation) {
     if (!automation || !memoryKey) return false;
 
@@ -265,13 +270,30 @@ export default class RiberBot {
         (automation.isOpened && automation.closeTemplateId) ||
         (!automation.isOpened && automation.openTemplateId)
       ) {
-        //executar ordens
-        //atualizar automação
-        result = {
-          type: "success",
-          text: "Ordem enviada!",
-          automationId: automation.id,
-        };
+        result = await this.placeOrder(
+          user,
+          automation,
+          automation.isOpened
+            ? automation.closeTemplate
+            : automation.openTemplate
+        );
+        if (result && result.type === "success" && automation.closeCondition) {
+          const indexesToRemove = !automation.isOpened
+            ? automation.openIndexes
+            : automation.closeIndexes;
+          this.deleteBrainIndex(indexesToRemove.split(","), automation.id);
+
+          const indexesToAdd = !automation.isOpened
+            ? automation.closeIndexes
+            : automation.openIndexes;
+          this.updateBrainIndex(indexesToAdd.split(","), automation);
+
+          automation.isOpened = automation.isOpened ? false : true;
+          await automationsRepository.updateAutomation(
+            automation.id,
+            automation
+          );
+        }
       }
 
       const notificationResult = await this.sendNotifications(
@@ -385,11 +407,13 @@ export default class RiberBot {
     const evalCondition =
       originalCondition + (invertedCondition ? " && " + invertedCondition : "");
 
-    if (LOGS || automation.logs)
+    if (LOGS || automation.logs) {
       logger(
         "A-" + automation.id,
         `RiberBot tentando analizar:\n${evalCondition} at ${automation.name}`
       );
+      logger("A-" + automation.id, MEMORY);
+    }
 
     return evalCondition
       ? Function("MEMORY", "return " + evalCondition)(MEMORY)

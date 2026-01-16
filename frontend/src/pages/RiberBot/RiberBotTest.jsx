@@ -19,7 +19,15 @@ function RiberBotTest(props) {
   }
 
   function btnUpdateClick() {
-    updateMemory(index, indexValue.current ? indexValue.current : indexValue)
+    let value = indexValue.current ? indexValue.current : indexValue;
+    if (indexValue.current[index] !== undefined) {
+      value = {
+        current: indexValue.current[index],
+        previous: indexValue.previous,
+      };
+    }
+
+    updateMemory(index, value)
       .then((results) => alert("Memoria Atualizada:\n" + JSON.stringify(results)))
       .catch((err) =>
         alert(err.response ? JSON.stringify(err.response.data) : err.message)
