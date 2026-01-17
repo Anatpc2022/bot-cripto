@@ -1,5 +1,6 @@
 import orderModel from "../models/orderModel.js";
 import Sequelize, { Op } from "sequelize";
+import AutomationModel from "../models/automationModel.js";
 
 const orderTypes = {
   MARKET: "MARKET",
@@ -60,11 +61,14 @@ function getOrders(userId, page = 1) {
 }
 
 function getOrderById(id, userId) {
-  return orderModel.findOne({ where: { id, userId } });
+  return orderModel.findOne({
+    where: { id, userId },
+    include: AutomationModel,
+  });
 }
 
 function getOrder(orderId) {
-  return orderModel.findOne({ where: { orderId } });
+  return orderModel.findOne({ where: { orderId }, include: AutomationModel });
 }
 
 async function updateOrder(currentOrder, newOrder) {

@@ -256,8 +256,40 @@ export default class RiberBot {
   }
 
   async calcQuoteQty(orderTemplate, symbolObj) {
-    if (orderTemplate.quantity === "QUOTE_QTY")
-      return orderTemplate.quantityMultiplier;
+    if (
+      orderTemplate.type !== ordersRepository.orderTypes.MARKET ||
+      parseFloat(orderTemplate.quantity)
+    )
+      throw new Error(
+        `Somente pedidos no MARKET podem calcular a quantidade cotada.`
+      );
+
+    const multiplier = orderTemplate.quantityMultiplier;
+
+    if (orderTemplate.quantity === "MAX_WALLET") {
+      if (orderTemplate.side !== "BUY")
+        throw new Error(
+          `Somente ordens de COMPRA A MERCADO podem calcular a quantidade cotada com SALDO DISPONIVEL.`
+        );
+
+      const asset = parseFloat(
+        await this.cache.get(
+          `${symbolObj.quote}:${indexes.indexKeys.WALLET}_${orderTemplate.userId}`
+        )
+      );
+      if (!asset)
+        throw new Error(
+          `Não há ${symbolObj.quote} na sua carteira para fazer uma ordem de compra.`
+        );
+
+      return (parseFloat(asset) * (multiplier > 1 ? 1 : multiplier)).toFixed(
+        symbolObj.quotePrecision
+      );
+    } else if (orderTemplate.quantity === "MIN_NOTIONAL") {
+      return (
+        parseFloat(symbolObj.minNotional) * (multiplier < 1 ? 1 : multiplier)
+      ).toFixed(symbolObj.quotePrecision);
+    } else if (orderTemplate.quantity === "QUOTE_QTY") return multiplier;
     else
       throw new Error(
         `Quantidade para esse modelo de ordem inválido. ${orderTemplate.quantity}`
@@ -322,9 +354,35 @@ export default class RiberBot {
       };
     }
 
-    //registrar o resultado
+    const savedOrder = await this.saveOrder(order, automation, result);
+    return {
+      type: "success",
+      text: `Ordem ${order.side} ${order.symbol} ${savedOrder.status}`,
+    };
+  }
 
-    return { type: "success", text: `Ordem ${order.side} ${order.symbol}` };
+  async saveOrder(order, automation, result) {
+    const savedOrder = await ordersRepository.insertOrder({
+      automationId: automation.id,
+      symbol: order.symbol,
+      userId: automation.userId,
+      quantity: order.quantity || result.executedQty,
+      type: order.options.type,
+      side: order.side,
+      limitPrice: ordersRepository.LIMIT_TYPES.includes(order.options.type)
+        ? order.limitPrice
+        : null,
+      stopPrice: ordersRepository.STOP_TYPES.includes(order.options.type)
+        ? order.options.stopPrice
+        : null,
+      orderId: result.orderId,
+      transactTime: result.transactTime || result.updateTime,
+      status: result.status || ordersRepository.orderStatus.NEW,
+    });
+
+    if (automation.logs)
+      logger("A-" + automation.id, savedOrder.get({ plain: true }));
+    return savedOrder;
   }
 
   async evalDecision(memoryKey, automation) {

@@ -58,7 +58,7 @@ export default function QuantityTemplate(props) {
               <option value="LAST_ORDER_QTY">Quantidade da última ordem</option>
               <option value="MIN_NOTIONAL">Valor mínimo permitido</option>
               <option value="MAX_WALLET">Usar saldo disponível</option>
-              <option value="QUOTE_QTY">Quantidade pelo valor gasto</option>
+              <option value="QUOTE_QTY">Quant. pelo valor à direita do par</option>
             </select>
 
             <span className="input-group-text bg-secondary">X</span>
