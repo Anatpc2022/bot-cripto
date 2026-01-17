@@ -296,6 +296,117 @@ export default class RiberBot {
       );
   }
 
+  async parsePrice(symbol, price, userId, automationId) {
+    switch (price) {
+      case "AUTO_ORDER_AVG": {
+        const memory = await this.cache.get(
+          `${symbol}:${indexes.indexKeys.AUTO_ORDER}_${automationId}`
+        );
+        return memory.avgPrice;
+      }
+      case "AUTO_ORDER_LIMIT": {
+        const memory = await this.cache.get(
+          `${symbol}:${indexes.indexKeys.AUTO_ORDER}_${automationId}`
+        );
+        return memory.limitPrice || memory.avgPrice;
+      }
+      case "AUTO_ORDER_STOP": {
+        const memory = await this.cache.get(
+          `${symbol}:${indexes.indexKeys.AUTO_ORDER}_${automationId}`
+        );
+        return memory.stopPrice || memory.avgPrice;
+      }
+      case "LAST_ORDER_AVG": {
+        const memory = await this.cache.get(
+          `${symbol}:${indexes.indexKeys.LAST_ORDER}_${userId}`
+        );
+        return memory.avgPrice;
+      }
+      case "LAST_ORDER_LIMIT": {
+        const memory = await this.cache.get(
+          `${symbol}:${indexes.indexKeys.LAST_ORDER}_${userId}`
+        );
+        return memory.limitPrice || memory.avgPrice;
+      }
+      case "LAST_ORDER_STOP": {
+        const memory = await this.cache.get(
+          `${symbol}:${indexes.indexKeys.LAST_ORDER}_${userId}`
+        );
+        return memory.stopPrice || memory.avgPrice;
+      }
+      case "TICKER_PRICE": {
+        const memory = await this.cache.get(
+          `${symbol}:${indexes.indexKeys.TICKER}`
+        );
+        return memory.current.close;
+      }
+      case "TICKER_HIGH": {
+        const memory = await this.cache.get(
+          `${symbol}:${indexes.indexKeys.TICKER}`
+        );
+        return memory.current.high;
+      }
+      case "TICKER_LOW": {
+        const memory = await this.cache.get(
+          `${symbol}:${indexes.indexKeys.TICKER}`
+        );
+        return memory.current.low;
+      }
+    }
+  }
+
+  async calcPrice(orderTemplate, symbolObj, isStopPrice, automationId) {
+    const tickSize = parseFloat(symbolObj.tickSize);
+    let newPrice, factor;
+
+    if (ordersRepository.LIMIT_TYPES.includes(orderTemplate.type)) {
+      try {
+        if (!isStopPrice) {
+          if (parseFloat(orderTemplate.limitPrice))
+            return orderTemplate.limitPrice;
+          newPrice = await this.parsePrice(
+            orderTemplate.symbol,
+            orderTemplate.limitPrice,
+            orderTemplate.userId,
+            automationId
+          );
+          newPrice *= orderTemplate.limitPriceMultiplier || 1;
+        } else {
+          if (parseFloat(orderTemplate.stopPrice))
+            return orderTemplate.stopPrice;
+          newPrice = await this.parsePrice(
+            orderTemplate.symbol,
+            orderTemplate.stopPrice,
+            orderTemplate.userId,
+            automationId
+          );
+          newPrice *= orderTemplate.stopPriceMultiplier || 1;
+        }
+      } catch (err) {
+        if (isStopPrice)
+          throw new Error(
+            `Não é possível calcular o preço de parada: ${orderTemplate.stopPrice} x ${orderTemplate.stopPriceMultiplier}. Err: ${err.message}`
+          );
+        else
+          throw new Error(
+            `Não é possível calcular o preço a limite: ${orderTemplate.limitPrice} x ${orderTemplate.limitPriceMultiplier}. Err: ${err.message}`
+          );
+      }
+    } else {
+      //order não limit
+    }
+
+    factor = Math.floor(newPrice / tickSize);
+    const price = (factor * tickSize).toFixed(symbolObj.quotePrecision);
+
+    if (!isFinite(price) || !price)
+      throw new Error(
+        `Não é possível calcular o preço: OT: ${orderTemplate.id}, $: ${price}, é Stop: ${isStopPrice}`
+      );
+
+    return price;
+  }
+
   async placeOrder(user, automation, orderTemplate) {
     if (!user || !automation || !orderTemplate)
       throw new Error(
@@ -317,11 +428,24 @@ export default class RiberBot {
         orderTemplate,
         symbol
       );
+    } else {
+      let price = await this.calcPrice(
+        orderTemplate,
+        symbol,
+        false,
+        automation.id
+      );
+
+      if (ordersRepository.LIMIT_TYPES.includes(order.options.type))
+        order.limitPrice = price;
+
+      //configurar a quantidade
+      order.quantity = orderTemplate.quantity;
+
+      //interpretar stop orders
+
+      //verificação de fundos
     }
-
-    //configurar a quantidade
-
-    //configurar o preço
 
     //submeter a ordem
     let result;
