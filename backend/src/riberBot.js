@@ -5,6 +5,9 @@ import usersRepository from "./repositories/usersRepository.js";
 import mailer from "./utils/email.js";
 import telegram from "./utils/telegram.js";
 import automationsRepository from "./repositories/automationsRepository.js";
+import symbolsRepository from "./repositories/symbolsRepository.js";
+import ordersRepository from "./repositories/ordersRepository.js";
+import Exchange from "./utils/exchange.js";
 
 const LOGS = process.env.RIBERBOT_LOGS === "true";
 const INTERVAL = parseInt(process.env.AUTOMATION_INTERVAL || 0);
@@ -243,8 +246,85 @@ export default class RiberBot {
     return results.flat();
   }
 
+  isValidQuoteOrder(orderTemplate) {
+    return (
+      orderTemplate.type === ordersRepository.orderTypes.MARKET &&
+      (["MIN_NOTIONAL", "QUOTE_QTY"].includes(orderTemplate.quantity) ||
+        (orderTemplate.side === "BUY" &&
+          orderTemplate.quantity === "MAX_WALLET"))
+    );
+  }
+
+  async calcQuoteQty(orderTemplate, symbolObj) {
+    if (orderTemplate.quantity === "QUOTE_QTY")
+      return orderTemplate.quantityMultiplier;
+    else
+      throw new Error(
+        `Quantidade para esse modelo de ordem inválido. ${orderTemplate.quantity}`
+      );
+  }
+
   async placeOrder(user, automation, orderTemplate) {
-    return { type: "success", text: "Ordem realizada com sucesso!" };
+    if (!user || !automation || !orderTemplate)
+      throw new Error(
+        `Todos os parâmetros são obrigatórios. Usuário: ${!!user}, Automação: ${!!automation}, OT: ${!!orderTemplate}`
+      );
+
+    const symbol = await symbolsRepository.getSymbol(orderTemplate.symbol);
+
+    const order = {
+      symbol: orderTemplate.symbol.toUpperCase(),
+      side: orderTemplate.side.toUpperCase(),
+      options: {
+        type: orderTemplate.type.toUpperCase(),
+      },
+    };
+
+    if (this.isValidQuoteOrder(orderTemplate)) {
+      order.options.quoteOrderQty = await this.calcQuoteQty(
+        orderTemplate,
+        symbol
+      );
+    }
+
+    //configurar a quantidade
+
+    //configurar o preço
+
+    //submeter a ordem
+    let result;
+    const exchange = new Exchange(user.id);
+
+    try {
+      if (order.side === "BUY")
+        result = await exchange.buy(
+          order.symbol,
+          order.quantity,
+          order.limitPrice,
+          order.options
+        );
+      else
+        result = await exchange.sell(
+          order.symbol,
+          order.quantity,
+          order.limitPrice,
+          order.options
+        );
+
+      if (result.code !== undefined && result.code < 0)
+        throw new Error(result.msg);
+    } catch (err) {
+      logger("A-" + automation.id, err.body ? err.body : err);
+      logger("A-" + automation.id, order);
+      return {
+        type: "error",
+        text: `Falha na Ordem ! ${err.body ? err.body : err.message}`,
+      };
+    }
+
+    //registrar o resultado
+
+    return { type: "success", text: `Ordem ${order.side} ${order.symbol}` };
   }
 
   async evalDecision(memoryKey, automation) {
