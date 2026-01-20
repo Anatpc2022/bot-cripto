@@ -57,15 +57,15 @@ async function insertOrderTemplate(req, res) {
       .status(409)
       .send(`Já existe um modelo de pedido com esses parâmetros.`);
 
-  newOrderTemplate.limitPrice = newOrderTemplate.limitPrice
-    ? newOrderTemplate.limitPrice.replace(",", ".")
-    : newOrderTemplate.limitPrice;
-  newOrderTemplate.stopPrice = newOrderTemplate.stopPrice
-    ? newOrderTemplate.stopPrice.replace(",", ".")
-    : newOrderTemplate.stopPrice;
-  newOrderTemplate.quantity = newOrderTemplate.quantity
-    ? newOrderTemplate.quantity.replace(",", ".")
-    : newOrderTemplate.quantity;
+  newOrderTemplate.limitPriceMultiplier = newOrderTemplate.limitPriceMultiplier
+    ? newOrderTemplate.limitPriceMultiplier.replace(",", ".")
+    : 1;
+  newOrderTemplate.stopPriceMultiplier = newOrderTemplate.stopPriceMultiplier
+    ? newOrderTemplate.stopPriceMultiplier.replace(",", ".")
+    : 1;
+  newOrderTemplate.quantityMultiplier = newOrderTemplate.quantityMultiplier
+    ? newOrderTemplate.quantityMultiplier.replace(",", ".")
+    : 1;
 
   if (
     !validatePrice(newOrderTemplate.limitPrice) ||
@@ -93,15 +93,15 @@ async function updateOrderTemplate(req, res) {
   if (!currentOrderTemplate) return res.sendStatus(404);
   if (currentOrderTemplate.userId !== userId) return res.sendStatus(403);
 
-  newOrderTemplate.limitPrice = newOrderTemplate.limitPrice
-    ? newOrderTemplate.limitPrice.replace(",", ".")
-    : newOrderTemplate.limitPrice;
-  newOrderTemplate.stopPrice = newOrderTemplate.stopPrice
-    ? newOrderTemplate.stopPrice.replace(",", ".")
-    : newOrderTemplate.stopPrice;
-  newOrderTemplate.quantity = newOrderTemplate.quantity
-    ? newOrderTemplate.quantity.replace(",", ".")
-    : newOrderTemplate.quantity;
+  newOrderTemplate.limitPriceMultiplier = newOrderTemplate.limitPriceMultiplier
+    ? newOrderTemplate.limitPriceMultiplier.replace(",", ".")
+    : 1;
+  newOrderTemplate.stopPriceMultiplier = newOrderTemplate.stopPriceMultiplier
+    ? newOrderTemplate.stopPriceMultiplier.replace(",", ".")
+    : 1;
+  newOrderTemplate.quantityMultiplier = newOrderTemplate.quantityMultiplier
+    ? newOrderTemplate.quantityMultiplier.replace(",", ".")
+    : 1;
 
   if (
     !validatePrice(newOrderTemplate.limitPrice) ||

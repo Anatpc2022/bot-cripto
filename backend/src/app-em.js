@@ -114,21 +114,23 @@ function scheduleOrderUpdate(order, userId) {
         },
       });
 
-      const riberBot = RiberBot.getInstance();
-      riberBot.updateMemory(
-        order.symbol,
-        `${indexes.indexKeys.LAST_ORDER}_${userId}`,
-        null,
-        updatedOrder.get({ plain: true })
-      );
-
-      if (updatedOrder.automationId)
+      if (order.status === "FILLED") {
+        const riberBot = RiberBot.getInstance();
         riberBot.updateMemory(
           order.symbol,
-          `${indexes.indexKeys.AUTO_ORDER}_${updatedOrder.automationId}`,
+          `${indexes.indexKeys.LAST_ORDER}_${userId}`,
           null,
-          updatedOrder.get({ plain: true })
+          updatedOrder.get({ plain: true }),
         );
+
+        if (updatedOrder.automationId)
+          riberBot.updateMemory(
+            order.symbol,
+            `${indexes.indexKeys.AUTO_ORDER}_${updatedOrder.automationId}`,
+            null,
+            updatedOrder.get({ plain: true }),
+          );
+      }
     } catch (err) {
       logger("U-" + userId, err);
     }
@@ -217,7 +219,7 @@ async function processChartData(monitor, ohlc) {
     } catch (err) {
       logger(
         "M-" + monitor.id,
-        `Exchange Monitor can't calc the index ${index}`
+        `O Exchange Monitor não consegue calcular o índice. ${index}`,
       );
       logger("M-" + monitor.id, err);
       return false;
@@ -234,7 +236,7 @@ async function processChartData(monitor, ohlc) {
 
 function startChartMonitor(monitor) {
   if (!monitor.symbol)
-    throw new Error("Can't start a Chart Monitor without a symbol!");
+    throw new Error("Não é possível iniciar um monitor de gráficos sem um par/moeda!");
 
   exchange.chartStream(
     monitor.symbol,
@@ -311,7 +313,7 @@ function stopChartMonitor(monitor) {
   if (monitor.logs)
     logger(
       "M-" + monitor.id,
-      `Chart monitor ${monitor.symbol}_${monitor.interval} stopped!`
+      `Monitor gráfico ${monitor.symbol}_${monitor.interval} parou!`,
     );
 
   const riberBot = RiberBot.getInstance();

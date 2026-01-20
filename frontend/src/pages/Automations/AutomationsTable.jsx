@@ -31,7 +31,7 @@ export default function AutomationsTable() {
     getAutomations(page || 1)
       .then((result) => {
         setAutomations(result.rows);
-        setCount(result.count + 2);
+        setCount(result.count);
         setMessage("");
       })
       .catch((err) => {

@@ -31,7 +31,7 @@ async function updateOrderTemplate(userId, id, newOrderTemplate) {
   const currentOrderTemplate = await getOrderTemplate(userId, id);
   if (!currentOrderTemplate)
     throw new Error(
-      `Não existe nenhum modelo de pedido com userId: ${userId} e id: ${id}`
+      `There is no order template with userId: ${userId} and id: ${id}`,
     );
 
   if (
@@ -66,12 +66,9 @@ async function updateOrderTemplate(userId, id, newOrderTemplate) {
   )
     currentOrderTemplate.trailingDelta = newOrderTemplate.trailingDelta;
 
-  if (
-    newOrderTemplate.limitPriceMultiplier !== null &&
-    newOrderTemplate.limitPriceMultiplier !== undefined &&
-    newOrderTemplate.limitPriceMultiplier !==
-      currentOrderTemplate.limitPriceMultiplier
-  )
+  if (!newOrderTemplate.limitPriceMultiplier)
+    currentOrderTemplate.limitPriceMultiplier = 1;
+  else
     currentOrderTemplate.limitPriceMultiplier =
       newOrderTemplate.limitPriceMultiplier;
 
@@ -82,14 +79,11 @@ async function updateOrderTemplate(userId, id, newOrderTemplate) {
   )
     currentOrderTemplate.stopPrice = newOrderTemplate.stopPrice;
 
-  if (
-    newOrderTemplate.stopPriceMultipler !== null &&
-    newOrderTemplate.stopPriceMultipler !== undefined &&
-    newOrderTemplate.stopPriceMultipler !==
-      currentOrderTemplate.stopPriceMultipler
-  )
-    currentOrderTemplate.stopPriceMultipler =
-      newOrderTemplate.stopPriceMultipler;
+  if (!newOrderTemplate.stopPriceMultiplier)
+    currentOrderTemplate.stopPriceMultiplier = 1;
+  else
+    currentOrderTemplate.stopPriceMultiplier =
+      newOrderTemplate.stopPriceMultiplier;
 
   if (
     newOrderTemplate.quantity &&
@@ -97,11 +91,9 @@ async function updateOrderTemplate(userId, id, newOrderTemplate) {
   )
     currentOrderTemplate.quantity = newOrderTemplate.quantity;
 
-  if (
-    newOrderTemplate.quantityMultiplier &&
-    newOrderTemplate.quantityMultiplier !==
-      currentOrderTemplate.quantityMultiplier
-  )
+  if (!newOrderTemplate.quantityMultiplier)
+    currentOrderTemplate.quantityMultiplier = 1;
+  else
     currentOrderTemplate.quantityMultiplier =
       newOrderTemplate.quantityMultiplier;
 

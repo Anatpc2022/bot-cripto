@@ -393,7 +393,18 @@ export default class RiberBot {
           );
       }
     } else {
-      //order não limit
+      const memory = await this.cache.get(
+        `${orderTemplate.symbol}:${indexes.indexKeys.TICKER}`,
+      );
+      if (!memory)
+        throw new Error(
+          `Não é possível calcular o preço a MARKET. OT: ${orderTemplate.id}, Preço de parada: ${isStopPrice}. Sem saldo.`,
+        );
+
+      newPrice = memory.current.close;
+      newPrice *= isStopPrice
+        ? orderTemplate.stopPriceMultiplier
+        : orderTemplate.limitPriceMultiplier;
     }
 
     factor = Math.floor(newPrice / tickSize);
@@ -405,6 +416,34 @@ export default class RiberBot {
       );
 
     return price;
+  }
+
+  async hasEnoughAssets(userId, symbolObj, order, price) {
+    let hasEnough = false;
+    const qty = parseFloat(order.quantity);
+
+    if (order.side === "BUY")
+      hasEnough =
+        parseFloat(
+          await this.cache.get(
+            `${symbolObj.quote}:${indexes.indexKeys.WALLET}_${userId}`,
+          ),
+        ) >=
+        price * qty;
+    else
+      hasEnough =
+        parseFloat(
+          await this.cache.get(
+            `${symbolObj.base}:${indexes.indexKeys.WALLET}_${userId}`,
+          ),
+        ) >= qty;
+
+    if (!hasEnough)
+      throw new Error(
+        `Você quer ${order.side} ${order.quantity} ${order.symbol} mas você não tem ativos suficientes.`,
+      );
+
+    return hasEnough;
   }
 
   async placeOrder(user, automation, orderTemplate) {
@@ -442,12 +481,19 @@ export default class RiberBot {
       //configurar a quantidade
       order.quantity = orderTemplate.quantity;
 
-      //interpretar stop orders
+      if (ordersRepository.STOP_TYPES.includes(order.options.type)) {
+        order.options.stopPrice = await this.calcPrice(
+          orderTemplate,
+          symbol,
+          true,
+          automation.id,
+        );
+        order.options.trailingDelta = orderTemplate.trailingDelta || undefined;
+      }
 
-      //verificação de fundos
+      await this.hasEnoughAssets(user.id, symbol, order, price);
     }
 
-    //submeter a ordem
     let result;
     const exchange = new Exchange(user.id);
 
@@ -498,6 +544,9 @@ export default class RiberBot {
         : null,
       stopPrice: ordersRepository.STOP_TYPES.includes(order.options.type)
         ? order.options.stopPrice
+        : null,
+      trailingDelta: ordersRepository.STOP_TYPES.includes(order.options.type)
+        ? order.options.trailingDelta
         : null,
       orderId: result.orderId,
       transactTime: result.transactTime || result.updateTime,
