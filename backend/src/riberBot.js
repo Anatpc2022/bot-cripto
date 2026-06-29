@@ -96,14 +96,14 @@ export default class RiberBot {
 
       this.deleteBrainIndex(
         `${automation.openIndexes},${automation.closeIndexes}`,
-        automation.id
+        automation.id,
       );
       delete this.BRAIN[automation.id];
 
       if (automation.logs)
         logger(
           "A-" + automation.id,
-          `Automação removida do CÉREBRO #${automation.id}`
+          `Automação removida do CÉREBRO #${automation.id}`,
         );
     } finally {
       this.setLocked(automation.id, false);
@@ -151,7 +151,7 @@ export default class RiberBot {
 
     const ticker = await this.getMemory(
       baseAsset + quoteAsset,
-      indexes.indexKeys.TICKER
+      indexes.indexKeys.TICKER,
     );
     if (ticker && ticker.current)
       return parseFloat(baseQty) * ticker.current.close;
@@ -161,7 +161,7 @@ export default class RiberBot {
   async getFiatConversion(stablecoin, fiatCoin, fiatQty) {
     const ticker = await this.getMemory(
       stablecoin + fiatCoin,
-      indexes.indexKeys.TICKER
+      indexes.indexKeys.TICKER,
     );
     if (ticker && ticker.current)
       return parseFloat(fiatQty) / ticker.current.close;
@@ -177,7 +177,7 @@ export default class RiberBot {
       const converted = await this.getStableConversion(
         baseAsset,
         RiberBot.DOLLAR_COINS[i],
-        baseQty
+        baseQty,
       );
       if (converted > 0) return converted;
     }
@@ -213,7 +213,7 @@ export default class RiberBot {
     if (LOGS)
       logger(
         "riberBot -",
-        `RiberBot memória atualizada: ${memoryKey} => ${JSON.stringify(value)}`
+        `RiberBot memória atualizada: ${memoryKey} => ${JSON.stringify(value)}`,
       );
 
     await this.cache.set(memoryKey, value);
@@ -223,11 +223,12 @@ export default class RiberBot {
 
   async updatedMemory(memoryKey) {
     const automations = this.findAutomations(memoryKey) || [];
+
     if (!automations || !automations.length) {
       if (LOGS)
         logger(
           "riberBot",
-          `RiberBot não possui automações para chave de memória ${memoryKey}`
+          `RiberBot não possui automações para chave de memória ${memoryKey}`,
         );
       return false;
     }
@@ -274,8 +275,8 @@ export default class RiberBot {
 
       const asset = parseFloat(
         await this.cache.get(
-          `${symbolObj.quote}:${indexes.indexKeys.WALLET}_${orderTemplate.userId}`
-        )
+          `${symbolObj.quote}:${indexes.indexKeys.WALLET}_${orderTemplate.userId}`,
+        ),
       );
       if (!asset)
         throw new Error(
@@ -283,7 +284,7 @@ export default class RiberBot {
         );
 
       return (parseFloat(asset) * (multiplier > 1 ? 1 : multiplier)).toFixed(
-        symbolObj.quotePrecision
+        symbolObj.quotePrecision,
       );
     } else if (orderTemplate.quantity === "MIN_NOTIONAL") {
       return (
@@ -292,7 +293,7 @@ export default class RiberBot {
     } else if (orderTemplate.quantity === "QUOTE_QTY") return multiplier;
     else
       throw new Error(
-        `Quantidade para esse modelo de ordem inválido. ${orderTemplate.quantity}`
+        `Quantidade para esse modelo de ordem inválido. ${orderTemplate.quantity}`,
       );
   }
 
@@ -300,55 +301,55 @@ export default class RiberBot {
     switch (price) {
       case "AUTO_ORDER_AVG": {
         const memory = await this.cache.get(
-          `${symbol}:${indexes.indexKeys.AUTO_ORDER}_${automationId}`
+          `${symbol}:${indexes.indexKeys.AUTO_ORDER}_${automationId}`,
         );
         return memory.avgPrice;
       }
       case "AUTO_ORDER_LIMIT": {
         const memory = await this.cache.get(
-          `${symbol}:${indexes.indexKeys.AUTO_ORDER}_${automationId}`
+          `${symbol}:${indexes.indexKeys.AUTO_ORDER}_${automationId}`,
         );
         return memory.limitPrice || memory.avgPrice;
       }
       case "AUTO_ORDER_STOP": {
         const memory = await this.cache.get(
-          `${symbol}:${indexes.indexKeys.AUTO_ORDER}_${automationId}`
+          `${symbol}:${indexes.indexKeys.AUTO_ORDER}_${automationId}`,
         );
         return memory.stopPrice || memory.avgPrice;
       }
       case "LAST_ORDER_AVG": {
         const memory = await this.cache.get(
-          `${symbol}:${indexes.indexKeys.LAST_ORDER}_${userId}`
+          `${symbol}:${indexes.indexKeys.LAST_ORDER}_${userId}`,
         );
         return memory.avgPrice;
       }
       case "LAST_ORDER_LIMIT": {
         const memory = await this.cache.get(
-          `${symbol}:${indexes.indexKeys.LAST_ORDER}_${userId}`
+          `${symbol}:${indexes.indexKeys.LAST_ORDER}_${userId}`,
         );
         return memory.limitPrice || memory.avgPrice;
       }
       case "LAST_ORDER_STOP": {
         const memory = await this.cache.get(
-          `${symbol}:${indexes.indexKeys.LAST_ORDER}_${userId}`
+          `${symbol}:${indexes.indexKeys.LAST_ORDER}_${userId}`,
         );
         return memory.stopPrice || memory.avgPrice;
       }
       case "TICKER_PRICE": {
         const memory = await this.cache.get(
-          `${symbol}:${indexes.indexKeys.TICKER}`
+          `${symbol}:${indexes.indexKeys.TICKER}`,
         );
         return memory.current.close;
       }
       case "TICKER_HIGH": {
         const memory = await this.cache.get(
-          `${symbol}:${indexes.indexKeys.TICKER}`
+          `${symbol}:${indexes.indexKeys.TICKER}`,
         );
         return memory.current.high;
       }
       case "TICKER_LOW": {
         const memory = await this.cache.get(
-          `${symbol}:${indexes.indexKeys.TICKER}`
+          `${symbol}:${indexes.indexKeys.TICKER}`,
         );
         return memory.current.low;
       }
@@ -368,7 +369,7 @@ export default class RiberBot {
             orderTemplate.symbol,
             orderTemplate.limitPrice,
             orderTemplate.userId,
-            automationId
+            automationId,
           );
           newPrice *= orderTemplate.limitPriceMultiplier || 1;
         } else {
@@ -378,18 +379,18 @@ export default class RiberBot {
             orderTemplate.symbol,
             orderTemplate.stopPrice,
             orderTemplate.userId,
-            automationId
+            automationId,
           );
           newPrice *= orderTemplate.stopPriceMultiplier || 1;
         }
       } catch (err) {
         if (isStopPrice)
           throw new Error(
-            `Não é possível calcular o preço de parada: ${orderTemplate.stopPrice} x ${orderTemplate.stopPriceMultiplier}. Err: ${err.message}`
+            `Não é possível calcular o preço de parada: ${orderTemplate.stopPrice} x ${orderTemplate.stopPriceMultiplier}. Err: ${err.message}`,
           );
         else
           throw new Error(
-            `Não é possível calcular o preço a limite: ${orderTemplate.limitPrice} x ${orderTemplate.limitPriceMultiplier}. Err: ${err.message}`
+            `Não é possível calcular o preço a limite: ${orderTemplate.limitPrice} x ${orderTemplate.limitPriceMultiplier}. Err: ${err.message}`,
           );
       }
     } else {
@@ -446,6 +447,31 @@ export default class RiberBot {
     return hasEnough;
   }
 
+  async calcQty(orderTemplate, price, symbolObj, automationId) {
+    price = parseFloat(price);
+    const isBuyOrder = orderTemplate.side === ordersRepository.orderSide.BUY;
+    //BTCUSDT
+    const asset = parseFloat(
+      await this.cache.get(
+        `${isBuyOrder ? symbolObj.quote : symbolObj.base}:${indexes.indexKeys.WALLET}_${orderTemplate.userId}`,
+      ),
+    );
+    if (!asset)
+      throw new Error(
+        `Não há ${isBuyOrder ? symbolObj.quote : symbolObj.base} na sua carteira para colocar um ${orderTemplate.side}`,
+      );
+
+    const quantity = orderTemplate.quantity.replace(",", ".");
+    const multiplier = parseFloat(orderTemplate.quantityMultiplier || 1);
+    if (parseFloat(quantity)) return quantity;
+
+    let newQty;
+    if (quantity === "MAX_WALLET") {
+    } else if (quantity === "MIN_NOTIONAL") {
+    } else if (/^(AUTO|LAST)_ORDER_QTY$/.test(quantity)) {
+    } else throw new Error(`Quantidade inválida no modelo de pedido: ${quantity}`);
+  }
+
   async placeOrder(user, automation, orderTemplate) {
     if (!user || !automation || !orderTemplate)
       throw new Error(
@@ -465,21 +491,25 @@ export default class RiberBot {
     if (this.isValidQuoteOrder(orderTemplate)) {
       order.options.quoteOrderQty = await this.calcQuoteQty(
         orderTemplate,
-        symbol
+        symbol,
       );
     } else {
       let price = await this.calcPrice(
         orderTemplate,
         symbol,
         false,
-        automation.id
+        automation.id,
       );
 
       if (ordersRepository.LIMIT_TYPES.includes(order.options.type))
         order.limitPrice = price;
 
-      //configurar a quantidade
-      order.quantity = orderTemplate.quantity;
+      order.quantity = await this.calcQty(
+        orderTemplate,
+        price,
+        symbol,
+        automation.id,
+      );
 
       if (ordersRepository.STOP_TYPES.includes(order.options.type)) {
         order.options.stopPrice = await this.calcPrice(
@@ -503,14 +533,14 @@ export default class RiberBot {
           order.symbol,
           order.quantity,
           order.limitPrice,
-          order.options
+          order.options,
         );
       else
         result = await exchange.sell(
           order.symbol,
           order.quantity,
           order.limitPrice,
-          order.options
+          order.options,
         );
 
       if (result.code !== undefined && result.code < 0)
@@ -586,7 +616,7 @@ export default class RiberBot {
           automation,
           automation.isOpened
             ? automation.closeTemplate
-            : automation.openTemplate
+            : automation.openTemplate,
         );
         if (result && result.type === "success" && automation.closeCondition) {
           const indexesToRemove = !automation.isOpened
@@ -602,7 +632,7 @@ export default class RiberBot {
           automation.isOpened = automation.isOpened ? false : true;
           await automationsRepository.updateAutomation(
             automation.id,
-            automation
+            automation,
           );
         }
       }
@@ -610,16 +640,16 @@ export default class RiberBot {
       const notificationResult = await this.sendNotifications(
         user,
         automation,
-        result
+        result,
       );
       if (!result.text) result = notificationResult;
 
       if (automation.logs && result)
         logger(
           "A-" + automation.id,
-          `Result for '${automation.name}' was ${JSON.stringify(
+          `Resultado para '${automation.name}' was ${JSON.stringify(
             result
-          )} at ${new Date()}`
+          )} at ${new Date()}`,
         );
 
       result.automationId = automation.id;
@@ -646,7 +676,7 @@ export default class RiberBot {
       const telegramResult = await this.sendTelegram(
         user.telegramChat,
         automation,
-        result.text + "\n" + automation.name
+        result.text + "\n" + automation.name,
       );
       if (!result.text) result = telegramResult;
     }
@@ -655,7 +685,7 @@ export default class RiberBot {
       const emailResult = await this.sendEmail(
         user.email,
         automation,
-        result.text + "\n" + automation.name
+        result.text + "\n" + automation.name,
       );
       if (!result.text) result = emailResult;
     }
@@ -704,7 +734,7 @@ export default class RiberBot {
 
     const MEMORY = await this.cache.getAll(...indexes);
     const hasVariablesInMemory = indexes.every(
-      (ix) => MEMORY[ix] !== null && MEMORY[ix] !== undefined
+      (ix) => MEMORY[ix] !== null && MEMORY[ix] !== undefined,
     );
     if (!hasVariablesInMemory) return false;
 
@@ -734,7 +764,7 @@ export default class RiberBot {
   invertCondition(memoryKey, condition) {
     const conds = condition.split(" && ");
     const condToInvert = conds.find(
-      (c) => c.indexOf(memoryKey) !== -1 && c.indexOf("current") !== -1
+      (c) => c.indexOf(memoryKey) !== -1 && c.indexOf("current") !== -1,
     );
     if (!condToInvert) return "";
 
@@ -783,7 +813,7 @@ export default class RiberBot {
     symbol,
     index,
     originalTicker,
-    executeAutomations = true
+    executeAutomations = true,
   ) {
     const ticker = { ...originalTicker };
     ticker.priceChange = parseFloat(ticker.priceChange);
@@ -825,7 +855,7 @@ export default class RiberBot {
     index,
     interval,
     value,
-    executeAutomations = true
+    executeAutomations = true,
   ) {
     if (value === undefined || value === null) return false;
     if (value.toJSON) value = value.toJSON();
@@ -878,7 +908,7 @@ export default class RiberBot {
     symbol,
     calculatedIndexes,
     interval,
-    executeAutomations = true
+    executeAutomations = true,
   ) {
     const keyValues = {};
     Object.keys(calculatedIndexes).forEach((index) => {
