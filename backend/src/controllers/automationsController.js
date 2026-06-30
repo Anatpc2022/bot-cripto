@@ -4,6 +4,7 @@ import orderTemplatesRepository from "../repositories/orderTemplatesRepository.j
 import db from "../db.js";
 import logger from "../utils/logger.js";
 import RiberBot from "../riberBot.js";
+import gridsRepository from "../repositories/gridsRepository.js";
 
 function validateConditions(conditions) {
   return /^(MEMORY\[\'.+?\'\](\..+)?[><=!]+\(?([0-9\.\-]+|(\'.+?\')|true|false|MEMORY\[\'.+?\'\](\..+)?)\)?( && )?)+$/g.test(
@@ -60,7 +61,7 @@ async function insertAutomation(req, res) {
     if (isGrid) {
       buyOrderTemplate = await orderTemplatesRepository.insertOrderTemplate(
         {
-          name: newAutomation.name + " BUY",
+          name: newAutomation.name + " COMPRA",
           symbol: newAutomation.symbol,
           type: "MARKET",
           side: "BUY",
@@ -78,7 +79,7 @@ async function insertAutomation(req, res) {
 
       sellOrderTemplate = await orderTemplatesRepository.insertOrderTemplate(
         {
-          name: newAutomation.name + " SELL",
+          name: newAutomation.name + " VENDA",
           symbol: newAutomation.symbol,
           type: "MARKET",
           side: "SELL",
@@ -201,7 +202,17 @@ async function deleteAutomation(req, res) {
   try {
     await ordersRepository.removeAutomationFromOrders(id, transaction);
 
+    if (currentAutomation.type === "GRID")
+      await gridsRepository.deleteGrids(id, transaction);
+
     await automationsRepository.deleteAutomation(id, transaction);
+
+    if (currentAutomation.type === "GRID")
+      await orderTemplatesRepository.deleteOrderTemplatesByIds(
+        userId,
+        [currentAutomation.openTemplateId, currentAutomation.closeTemplateId],
+        transaction,
+      );
 
     await transaction.commit();
   } catch (err) {

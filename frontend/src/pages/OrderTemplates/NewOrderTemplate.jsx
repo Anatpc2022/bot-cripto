@@ -36,11 +36,14 @@ export default function NewOrderTemplate() {
   useEffect(() => {
     if (!id) return;
     getOrderTemplate(id)
-      .then((ot) => setOrderTemplate(ot))
+      .then((ot) => {
+        if (ot.name.startsWith("GRID ")) return navigate("/ordertemplates/");
+        setOrderTemplate(ot);
+      })
       .catch((err) => {
         console.error(err.response ? err.response.data : err);
         setMessage(
-          err.response ? JSON.stringify(err.response.data) : err.message
+          err.response ? JSON.stringify(err.response.data) : err.message,
         );
       });
   }, [id]);
@@ -58,7 +61,7 @@ export default function NewOrderTemplate() {
       .catch((err) => {
         console.error(err.response ? err.response.data : err);
         setMessage(
-          err.response ? JSON.stringify(err.response.data) : err.message
+          err.response ? JSON.stringify(err.response.data) : err.message,
         );
       });
   }
@@ -123,14 +126,7 @@ export default function NewOrderTemplate() {
               />
             </div>
             <div className="col-2">
-              <label
-                htmlFor="trailingDelta"
-                data-bs-toggle="tooltip"
-                data-bs-placement="top"
-                title="Quantidade em BIPS (0,01%) que o preço pode recuar antes da ordem ser acionada."
-              >
-                Trailing Delta (BIPS):
-              </label>
+              <label htmlFor="trailingDelta">Trailing Delta (BIPS):</label>
               <input
                 type="number"
                 className="form-control"

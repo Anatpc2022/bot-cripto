@@ -16,6 +16,13 @@ export default function AutomationRow(props) {
     return automation.isOpened ? "VENDENDO" : "COMPRANDO";
   }
 
+  function getEditUrl() {
+    if (!props.data) return "";
+    return props.data.type === "GRID"
+      ? "/grids/edit/" + props.data.id
+      : "/automations/edit/" + props.data.id;
+  }
+
   return (
     <tr>
       <td>{props.data.type}</td>
@@ -30,7 +37,7 @@ export default function AutomationRow(props) {
         {!props.data.isActive ? (
           <a
             className="btn btn-secondary btn-xs ms-2"
-            href={"/automations/edit/" + props.data.id}
+            href={getEditUrl()}
             title="Editar esta Automação"
           >
             <svg

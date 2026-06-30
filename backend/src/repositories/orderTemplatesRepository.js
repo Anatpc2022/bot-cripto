@@ -8,6 +8,13 @@ function deleteOrderTemplate(userId, id) {
   return OrderTemplateModel.destroy({ where: { id, userId } });
 }
 
+function deleteOrderTemplatesByIds(userId, ids, transaction) {
+  return OrderTemplateModel.destroy({
+    where: { id: ids, userId },
+    transaction,
+  });
+}
+
 function getOrderTemplates(userId, page = 1) {
   const options = {
     where: { userId },
@@ -121,4 +128,5 @@ export default {
   deleteOrderTemplate,
   insertOrderTemplate,
   orderTemplateExists,
+  deleteOrderTemplatesByIds,
 };
