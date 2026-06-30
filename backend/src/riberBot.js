@@ -450,7 +450,6 @@ export default class RiberBot {
   async calcQty(orderTemplate, price, symbolObj, automationId) {
     price = parseFloat(price);
     const isBuyOrder = orderTemplate.side === ordersRepository.orderSide.BUY;
-    //BTCUSDT
     const asset = parseFloat(
       await this.cache.get(
         `${isBuyOrder ? symbolObj.quote : symbolObj.base}:${indexes.indexKeys.WALLET}_${orderTemplate.userId}`,
@@ -466,10 +465,45 @@ export default class RiberBot {
     if (parseFloat(quantity)) return quantity;
 
     let newQty;
+    const minNotional = parseFloat(symbolObj.minNotional);
+    const minQty = minNotional / price;
+
     if (quantity === "MAX_WALLET") {
+      newQty = isBuyOrder
+        ? (asset * (multiplier > 1 ? 1 : multiplier)) / price
+        : asset * (multiplier > 1 ? 1 : multiplier);
+
+      if (newQty < minQty) newQty = minQty;
     } else if (quantity === "MIN_NOTIONAL") {
+      newQty = minQty * (multiplier < 1 ? 1 : multiplier);
     } else if (/^(AUTO|LAST)_ORDER_QTY$/.test(quantity)) {
+      const orderIndex =
+        quantity === "LAST_ORDER_QTY"
+          ? `${indexes.indexKeys.LAST_ORDER}_${orderTemplate.userId}`
+          : `${indexes.indexKeys.AUTO_ORDER}_${automationId}`;
+      const lastOrder = await this.cache.get(
+        `${orderTemplate.symbol}:${orderIndex}`,
+      );
+      if (!lastOrder)
+        throw new Error(
+          `Não existe um último pedido a ser usado como referência para ${orderTemplate.symbol}`,
+        );
+
+      newQty = parseFloat(lastOrder.quantity) * multiplier;
+      if (!isBuyOrder && newQty > asset) newQty = asset;
+      if (newQty < minQty) newQty = minQty;
     } else throw new Error(`Quantidade inválida no modelo de pedido: ${quantity}`);
+
+    const stepSize = parseFloat(symbolObj.stepSize);
+    const factor = Math.floor(newQty / stepSize);
+    const finalQty = (factor * stepSize).toFixed(symbolObj.basePrecision);
+
+    if (!isFinite(finalQty) || !finalQty)
+      throw new Error(
+        `Error in calcQty: OT: ${orderTemplate.id}, $: ${price}, qty: ${finalQty}`,
+      );
+
+    return finalQty;
   }
 
   async placeOrder(user, automation, orderTemplate) {
