@@ -49,7 +49,7 @@ function getActiveAutomations(userId) {
   });
 }
 
-async function updateAutomation(id, newAutomation) {
+async function updateAutomation(id, newAutomation, transaction) {
   const currentAutomation = await getAutomation(id);
 
   if (newAutomation.symbol && newAutomation.symbol !== currentAutomation.symbol)
@@ -64,13 +64,12 @@ async function updateAutomation(id, newAutomation) {
   if (newAutomation.openCondition !== currentAutomation.openCondition)
     currentAutomation.openCondition = newAutomation.openCondition;
 
-  if (
-    newAutomation.openTemplateId !== undefined &&
-    parseInt(newAutomation.openTemplateId) > 0
-  ) {
-    if (newAutomation.openTemplateId !== currentAutomation.openTemplateId)
-      currentAutomation.openTemplateId = newAutomation.openTemplateId;
-  } else currentAutomation.openTemplateId = null;
+  if (newAutomation.openTemplateId !== undefined) {
+    if (parseInt(newAutomation.openTemplateId) > 0) {
+      if (newAutomation.openTemplateId !== currentAutomation.openTemplateId)
+        currentAutomation.openTemplateId = newAutomation.openTemplateId;
+    } else currentAutomation.openTemplateId = null;
+  }
 
   if (newAutomation.closeIndexes !== currentAutomation.closeIndexes)
     currentAutomation.closeIndexes = newAutomation.closeIndexes;
@@ -78,13 +77,12 @@ async function updateAutomation(id, newAutomation) {
   if (newAutomation.closeCondition !== currentAutomation.closeCondition)
     currentAutomation.closeCondition = newAutomation.closeCondition;
 
-  if (
-    newAutomation.closeTemplateId !== undefined &&
-    parseInt(newAutomation.closeTemplateId) > 0
-  ) {
-    if (newAutomation.closeTemplateId !== currentAutomation.closeTemplateId)
-      currentAutomation.closeTemplateId = newAutomation.closeTemplateId;
-  } else currentAutomation.closeTemplateId = null;
+  if (newAutomation.closeTemplateId !== undefined) {
+    if (parseInt(newAutomation.closeTemplateId) > 0) {
+      if (newAutomation.closeTemplateId !== currentAutomation.closeTemplateId)
+        currentAutomation.closeTemplateId = newAutomation.closeTemplateId;
+    } else currentAutomation.closeTemplateId = null;
+  }
 
   if (
     newAutomation.isActive !== null &&
@@ -114,8 +112,8 @@ async function updateAutomation(id, newAutomation) {
   )
     currentAutomation.logs = newAutomation.logs;
 
-  await currentAutomation.save();
-  return getAutomation(currentAutomation.id);
+  await currentAutomation.save({ transaction });
+  return currentAutomation;
 }
 
 async function getActiveAutomationsByOrderTemplateId(orderTemplateId) {

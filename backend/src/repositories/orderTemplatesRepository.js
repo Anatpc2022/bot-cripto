@@ -27,7 +27,7 @@ async function getOrderTemplate(userId, id) {
   return OrderTemplateModel.findOne({ where: { id, userId } });
 }
 
-async function updateOrderTemplate(userId, id, newOrderTemplate) {
+async function updateOrderTemplate(userId, id, newOrderTemplate, transaction) {
   const currentOrderTemplate = await getOrderTemplate(userId, id);
   if (!currentOrderTemplate)
     throw new Error(
@@ -97,7 +97,7 @@ async function updateOrderTemplate(userId, id, newOrderTemplate) {
     currentOrderTemplate.quantityMultiplier =
       newOrderTemplate.quantityMultiplier;
 
-  await currentOrderTemplate.save();
+  await currentOrderTemplate.save({ transaction });
   return currentOrderTemplate;
 }
 

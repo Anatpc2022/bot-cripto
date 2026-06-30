@@ -1029,33 +1029,36 @@ export default class RiberBot {
   }
 
   async generateGrids(automation, levels, quantity, transaction) {
-    let buyOrderTemplate = automation.openTemplate;
-    if (buyOrderTemplate && buyOrderTemplate.quantityMultiplier !== quantity) {
-      buyOrderTemplate.quantityMultiplier = quantity;
-      await orderTemplatesRepository.updateOrderTemplate(
-        automation.userId,
-        buyOrderTemplate.id,
-        buyOrderTemplate,
-      );
-    }
-
-    let sellOrderTemplate = automation.closeTemplate;
-    if (
-      sellOrderTemplate &&
-      sellOrderTemplate.quantityMultiplier !== quantity
-    ) {
-      sellOrderTemplate.quantityMultiplier = quantity;
-      await orderTemplatesRepository.updateOrderTemplate(
-        automation.userId,
-        sellOrderTemplate.id,
-        sellOrderTemplate,
-      );
-    }
-
-    if (!buyOrderTemplate || !sellOrderTemplate)
+    if (!automation.openTemplate || !automation.closeTemplate)
       throw new Error(
-        `There is(are) no order template(s) for this grid automation: ${automation.id}`,
+        `Não há modelos de pedido para esta automação de GRID: ${automation.id}`,
       );
+
+    if (
+      automation.openTemplate &&
+      automation.openTemplate.quantityMultiplier !== quantity
+    ) {
+      automation.openTemplate.quantityMultiplier = quantity;
+      await orderTemplatesRepository.updateOrderTemplate(
+        automation.userId,
+        automation.openTemplateId,
+        automation.openTemplate,
+        transaction,
+      );
+    }
+
+    if (
+      automation.closeTemplate &&
+      automation.closeTemplate.quantityMultiplier !== quantity
+    ) {
+      automation.closeTemplate.quantityMultiplier = quantity;
+      await orderTemplatesRepository.updateOrderTemplate(
+        automation.userId,
+        automation.closeTemplateId,
+        automation.closeTemplate,
+        transaction,
+      );
+    }
 
     await gridsRepository.deleteGrids(automation.id, transaction);
 

@@ -49,6 +49,9 @@ async function insertAutomation(req, res) {
     return res.sendStatus(422);
 
   const isGrid = newAutomation.type === "GRID";
+  if (isGrid && (!quantity || !levels))
+    return res.status(422).send(`Invalid grid params.`);
+
   const transaction = await db.transaction();
   let savedAutomation;
 
@@ -128,6 +131,12 @@ async function updateAutomation(req, res) {
   const newAutomation = req.body;
   newAutomation.userId = userId;
 
+  const { quantity, levels } = req.query;
+
+  const isGrid = newAutomation.type === "GRID";
+  if (isGrid && (!quantity || !levels))
+    return res.status(422).send(`Invalid grid params.`);
+
   if (
     !validateConditions(newAutomation.openCondition) &&
     !validateConditions(newAutomation.closeCondition)
@@ -139,16 +148,40 @@ async function updateAutomation(req, res) {
   if (currentAutomation.userId !== userId) return res.sendStatus(403);
 
   RiberBot.getInstance().deleteBrain(currentAutomation);
-  const automation = await automationsRepository.updateAutomation(
-    id,
-    newAutomation,
-  );
 
-  if (automation.isActive) {
-    RiberBot.getInstance().updateBrain(automation.get({ plain: true }));
+  const transaction = await db.transaction();
+  let updatedAutomation;
+
+  try {
+    updatedAutomation = await automationsRepository.updateAutomation(
+      id,
+      newAutomation,
+      transaction,
+    );
+
+    if (isGrid)
+      await RiberBot.getInstance().generateGrids(
+        updatedAutomation,
+        levels,
+        quantity,
+        transaction,
+      );
+
+    await transaction.commit();
+  } catch (err) {
+    await transaction.rollback();
+    logger("system", err);
+    return res.status(500).send(err.message);
   }
 
-  res.json(automation.get({ plain: true }));
+  updatedAutomation = await automationsRepository.getAutomation(
+    updatedAutomation.id,
+  );
+  if (updatedAutomation.isActive) {
+    RiberBot.getInstance().updateBrain(updatedAutomation.get({ plain: true }));
+  }
+
+  res.json(updatedAutomation.get({ plain: true }));
 }
 
 async function deleteAutomation(req, res) {
