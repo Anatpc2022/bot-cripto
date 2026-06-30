@@ -1,6 +1,7 @@
 import Sequelize from "sequelize";
 import database from "../db.js";
 import OrderTemplateModel from "./orderTemplateModel.js";
+import GridModel from "./gridModel.js";
 
 const AutomationModel = database.define("automation", {
   id: {
@@ -66,6 +67,10 @@ const AutomationModel = database.define("automation", {
   },
   createdAt: Sequelize.DATE,
   updatedAt: Sequelize.DATE,
+});
+
+AutomationModel.hasMany(GridModel, {
+  foreignKey: "automationId",
 });
 
 AutomationModel.belongsTo(OrderTemplateModel, {
