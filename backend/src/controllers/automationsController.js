@@ -5,8 +5,6 @@ import db from "../db.js";
 import logger from "../utils/logger.js";
 import RiberBot from "../riberBot.js";
 
-//MEMORY['BTCUSDT:TICKER'].current.close > 100000
-//MEMORY['BTCUSDT:TICKER'].current.close > MEMORY['BTCUSDT:TICKER'].current.close
 function validateConditions(conditions) {
   return /^(MEMORY\[\'.+?\'\](\..+)?[><=!]+\(?([0-9\.\-]+|(\'.+?\')|true|false|MEMORY\[\'.+?\'\](\..+)?)\)?( && )?)+$/g.test(
     conditions,
@@ -55,43 +53,42 @@ async function insertAutomation(req, res) {
   let savedAutomation;
 
   try {
+    let buyOrderTemplate, sellOrderTemplate;
     if (isGrid) {
-      const buyOrderTemplate =
-        await orderTemplatesRepository.insertOrderTemplate(
-          {
-            name: newAutomation.name + " BUY",
-            symbol: newAutomation.symbol,
-            type: "MARKET",
-            side: "BUY",
-            userId: newAutomation.userId,
-            limitPrice: null,
-            limitPriceMultiplier: 1,
-            stopPrice: null,
-            stopPriceMultiplier: 1,
-            quantity: "QUOTE_QTY",
-            quantityMultiplier: quantity,
-          },
-          transaction,
-        );
+      buyOrderTemplate = await orderTemplatesRepository.insertOrderTemplate(
+        {
+          name: newAutomation.name + " BUY",
+          symbol: newAutomation.symbol,
+          type: "MARKET",
+          side: "BUY",
+          userId: newAutomation.userId,
+          limitPrice: null,
+          limitPriceMultiplier: 1,
+          stopPrice: null,
+          stopPriceMultiplier: 1,
+          quantity: "QUOTE_QTY",
+          quantityMultiplier: quantity,
+        },
+        transaction,
+      );
       newAutomation.openTemplateId = buyOrderTemplate.id;
 
-      const sellOrderTemplate =
-        await orderTemplatesRepository.insertOrderTemplate(
-          {
-            name: newAutomation.name + " SELL",
-            symbol: newAutomation.symbol,
-            type: "MARKET",
-            side: "SELL",
-            userId: newAutomation.userId,
-            limitPrice: null,
-            limitPriceMultiplier: 1,
-            stopPrice: null,
-            stopPriceMultiplier: 1,
-            quantity: "QUOTE_QTY",
-            quantityMultiplier: quantity,
-          },
-          transaction,
-        );
+      sellOrderTemplate = await orderTemplatesRepository.insertOrderTemplate(
+        {
+          name: newAutomation.name + " SELL",
+          symbol: newAutomation.symbol,
+          type: "MARKET",
+          side: "SELL",
+          userId: newAutomation.userId,
+          limitPrice: null,
+          limitPriceMultiplier: 1,
+          stopPrice: null,
+          stopPriceMultiplier: 1,
+          quantity: "QUOTE_QTY",
+          quantityMultiplier: quantity,
+        },
+        transaction,
+      );
       newAutomation.closeTemplateId = sellOrderTemplate.id;
     }
 
@@ -100,13 +97,16 @@ async function insertAutomation(req, res) {
       transaction,
     );
 
-    if (isGrid)
+    if (isGrid) {
+      savedAutomation.openTemplate = buyOrderTemplate;
+      savedAutomation.closeTemplate = sellOrderTemplate;
       await RiberBot.getInstance().generateGrids(
         savedAutomation,
         levels,
         quantity,
         transaction,
       );
+    }
 
     await transaction.commit();
   } catch (err) {

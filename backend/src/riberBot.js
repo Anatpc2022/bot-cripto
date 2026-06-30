@@ -8,6 +8,8 @@ import automationsRepository from "./repositories/automationsRepository.js";
 import symbolsRepository from "./repositories/symbolsRepository.js";
 import ordersRepository from "./repositories/ordersRepository.js";
 import Exchange from "./utils/exchange.js";
+import orderTemplatesRepository from "./repositories/orderTemplatesRepository.js";
+import gridsRepository from "./repositories/gridsRepository.js";
 
 const LOGS = process.env.RIBERBOT_LOGS === "true";
 const INTERVAL = parseInt(process.env.AUTOMATION_INTERVAL || 0);
@@ -1027,6 +1029,77 @@ export default class RiberBot {
   }
 
   async generateGrids(automation, levels, quantity, transaction) {
-    return true;
+    let buyOrderTemplate = automation.openTemplate;
+    if (buyOrderTemplate && buyOrderTemplate.quantityMultiplier !== quantity) {
+      buyOrderTemplate.quantityMultiplier = quantity;
+      await orderTemplatesRepository.updateOrderTemplate(
+        automation.userId,
+        buyOrderTemplate.id,
+        buyOrderTemplate,
+      );
+    }
+
+    let sellOrderTemplate = automation.closeTemplate;
+    if (
+      sellOrderTemplate &&
+      sellOrderTemplate.quantityMultiplier !== quantity
+    ) {
+      sellOrderTemplate.quantityMultiplier = quantity;
+      await orderTemplatesRepository.updateOrderTemplate(
+        automation.userId,
+        sellOrderTemplate.id,
+        sellOrderTemplate,
+      );
+    }
+
+    if (!buyOrderTemplate || !sellOrderTemplate)
+      throw new Error(
+        `There is(are) no order template(s) for this grid automation: ${automation.id}`,
+      );
+
+    await gridsRepository.deleteGrids(automation.id, transaction);
+
+    levels = parseInt(levels);
+    const conditionSplit = automation.openCondition.split(" && ");
+    const lowerLimit = parseFloat(conditionSplit[0].split(">")[1]);
+    const upperLimit = parseFloat(conditionSplit[1].split("<")[1]);
+    const priceByLevel = (upperLimit - lowerLimit) / levels;
+    const grids = [];
+    const differences = [];
+
+    const tickerIndex = `${automation.symbol}:${indexes.indexKeys.TICKER}`;
+    const ticker = await this.cache.get(tickerIndex);
+    if (!ticker) throw new Error(`There is no ticker for ${automation.symbol}`);
+    const currentPrice = parseFloat(ticker.current.close);
+
+    for (let i = 1; i <= levels; i++) {
+      const targetPrice = lowerLimit + priceByLevel * i;
+      differences.push(Math.abs(currentPrice - targetPrice));
+
+      if (targetPrice < currentPrice) {
+        //se está abaixo da cotação, compra
+        const prevLevelPrice = targetPrice - priceByLevel;
+        grids.push({
+          automationId: automation.id,
+          side: ordersRepository.orderSide.BUY,
+          condition: `MEMORY['${tickerIndex}'].current.close<${targetPrice} && MEMORY['${tickerIndex}'].previous.close>=${targetPrice} && MEMORY['${tickerIndex}'].current.close>${prevLevelPrice}`,
+        });
+      } else {
+        //se está acima da cotação, venda
+        const nextLevelPrice = targetPrice + priceByLevel;
+        grids.push({
+          automationId: automation.id,
+          side: ordersRepository.orderSide.SELL,
+          condition: `MEMORY['${tickerIndex}'].current.close>${targetPrice} && MEMORY['${tickerIndex}'].previous.close<=${targetPrice} && MEMORY['${tickerIndex}'].current.close<${nextLevelPrice}`,
+        });
+      }
+    }
+
+    const nearestGrid = differences.findIndex(
+      (d) => d === Math.min(...differences),
+    );
+    grids.splice(nearestGrid, 1);
+
+    return gridsRepository.insertGrids(grids, transaction);
   }
 }
