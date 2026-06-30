@@ -11,6 +11,7 @@ import Automations from "./pages/Automations/Automations";
 import NewAutomation from "./pages/Automations/NewAutomation/NewAutomation";
 import OrderTemplates from "./pages/OrderTemplates/OrderTemplates";
 import NewOrderTemplate from "./pages/OrderTemplates/NewOrderTemplate";
+import NewGrid from "./pages/Automations/NewGrid/NewGrid";
 
 function Router() {
   function PrivateRoute({ children }) {
@@ -75,6 +76,22 @@ function Router() {
           element={
             <PrivateRoute>
               <OrderTemplates />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/grids/edit/:id"
+          element={
+            <PrivateRoute>
+              <NewGrid />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/grids/new"
+          element={
+            <PrivateRoute>
+              <NewGrid />
             </PrivateRoute>
           }
         />
