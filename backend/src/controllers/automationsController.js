@@ -1,5 +1,6 @@
 import automationsRepository from "../repositories/automationsRepository.js";
 import ordersRepository from "../repositories/ordersRepository.js";
+import orderTemplatesRepository from "../repositories/orderTemplatesRepository.js";
 import db from "../db.js";
 import logger from "../utils/logger.js";
 import RiberBot from "../riberBot.js";
@@ -8,7 +9,7 @@ import RiberBot from "../riberBot.js";
 //MEMORY['BTCUSDT:TICKER'].current.close > MEMORY['BTCUSDT:TICKER'].current.close
 function validateConditions(conditions) {
   return /^(MEMORY\[\'.+?\'\](\..+)?[><=!]+\(?([0-9\.\-]+|(\'.+?\')|true|false|MEMORY\[\'.+?\'\](\..+)?)\)?( && )?)+$/g.test(
-    conditions
+    conditions,
   );
 }
 
@@ -34,10 +35,12 @@ async function insertAutomation(req, res) {
   const newAutomation = req.body;
   newAutomation.userId = userId;
 
+  const { quantity, levels } = req.query;
+
   const alreadyExists = await automationsRepository.automationExists(
     userId,
     newAutomation.symbol,
-    newAutomation.name
+    newAutomation.name,
   );
   if (alreadyExists) return res.sendStatus(409);
 
@@ -47,15 +50,76 @@ async function insertAutomation(req, res) {
   )
     return res.sendStatus(422);
 
-  const automation = await automationsRepository.insertAutomation(
-    newAutomation
-  );
+  const isGrid = newAutomation.type === "GRID";
+  const transaction = await db.transaction();
+  let savedAutomation;
 
-  if (automation.isActive) {
-    RiberBot.getInstance().updateBrain(automation.get({ plain: true }));
+  try {
+    if (isGrid) {
+      const buyOrderTemplate =
+        await orderTemplatesRepository.insertOrderTemplate(
+          {
+            name: newAutomation.name + " BUY",
+            symbol: newAutomation.symbol,
+            type: "MARKET",
+            side: "BUY",
+            userId: newAutomation.userId,
+            limitPrice: null,
+            limitPriceMultiplier: 1,
+            stopPrice: null,
+            stopPriceMultiplier: 1,
+            quantity: "QUOTE_QTY",
+            quantityMultiplier: quantity,
+          },
+          transaction,
+        );
+      newAutomation.openTemplateId = buyOrderTemplate.id;
+
+      const sellOrderTemplate =
+        await orderTemplatesRepository.insertOrderTemplate(
+          {
+            name: newAutomation.name + " SELL",
+            symbol: newAutomation.symbol,
+            type: "MARKET",
+            side: "SELL",
+            userId: newAutomation.userId,
+            limitPrice: null,
+            limitPriceMultiplier: 1,
+            stopPrice: null,
+            stopPriceMultiplier: 1,
+            quantity: "QUOTE_QTY",
+            quantityMultiplier: quantity,
+          },
+          transaction,
+        );
+      newAutomation.closeTemplateId = sellOrderTemplate.id;
+    }
+
+    savedAutomation = await automationsRepository.insertAutomation(
+      newAutomation,
+      transaction,
+    );
+
+    if (isGrid)
+      await RiberBot.getInstance().generateGrids(
+        savedAutomation,
+        levels,
+        quantity,
+        transaction,
+      );
+
+    await transaction.commit();
+  } catch (err) {
+    await transaction.rollback();
+    logger("system", err);
+    return res.status(500).send(err.message);
   }
 
-  res.status(201).json(automation.get({ plain: true }));
+  if (savedAutomation.isActive) {
+    RiberBot.getInstance().updateBrain(savedAutomation.get({ plain: true }));
+  }
+
+  res.status(201).json(savedAutomation.get({ plain: true }));
 }
 
 async function updateAutomation(req, res) {
@@ -77,7 +141,7 @@ async function updateAutomation(req, res) {
   RiberBot.getInstance().deleteBrain(currentAutomation);
   const automation = await automationsRepository.updateAutomation(
     id,
-    newAutomation
+    newAutomation,
   );
 
   if (automation.isActive) {

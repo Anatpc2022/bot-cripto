@@ -33,7 +33,7 @@ export default class RiberBot {
       automations.filter((a) => a.isActive).map((a) => this.updateBrain(a));
       logger(
         "riberBot -",
-        `O Cérebro do RiberBot foi iniciado para o usuário ${automations[0].userId}!`
+        `O Cérebro do RiberBot foi iniciado para o usuário ${automations[0].userId}!`,
       );
     }, 1000);
   }
@@ -71,7 +71,7 @@ export default class RiberBot {
     if (automation.logs)
       logger(
         "A-" + automation.id,
-        `Automação adicionada ao CÉREBRO #${automation.id}`
+        `Automação adicionada ao CÉREBRO #${automation.id}`,
       );
   }
 
@@ -262,7 +262,7 @@ export default class RiberBot {
       parseFloat(orderTemplate.quantity)
     )
       throw new Error(
-        `Somente pedidos no MARKET podem calcular a quantidade cotada.`
+        `Somente pedidos no MARKET podem calcular a quantidade cotada.`,
       );
 
     const multiplier = orderTemplate.quantityMultiplier;
@@ -270,7 +270,7 @@ export default class RiberBot {
     if (orderTemplate.quantity === "MAX_WALLET") {
       if (orderTemplate.side !== "BUY")
         throw new Error(
-          `Somente ordens de COMPRA A MERCADO podem calcular a quantidade cotada com SALDO DISPONIVEL.`
+          `Somente ordens de COMPRA A MERCADO podem calcular a quantidade cotada com SALDO DISPONIVEL.`,
         );
 
       const asset = parseFloat(
@@ -280,7 +280,7 @@ export default class RiberBot {
       );
       if (!asset)
         throw new Error(
-          `Não há ${symbolObj.quote} na sua carteira para fazer uma ordem de compra.`
+          `Não há ${symbolObj.quote} na sua carteira para fazer uma ordem de compra.`,
         );
 
       return (parseFloat(asset) * (multiplier > 1 ? 1 : multiplier)).toFixed(
@@ -413,7 +413,7 @@ export default class RiberBot {
 
     if (!isFinite(price) || !price)
       throw new Error(
-        `Não é possível calcular o preço: OT: ${orderTemplate.id}, $: ${price}, é Stop: ${isStopPrice}`
+        `Não é possível calcular o preço: OT: ${orderTemplate.id}, $: ${price}, é Stop: ${isStopPrice}`,
       );
 
     return price;
@@ -492,7 +492,8 @@ export default class RiberBot {
       newQty = parseFloat(lastOrder.quantity) * multiplier;
       if (!isBuyOrder && newQty > asset) newQty = asset;
       if (newQty < minQty) newQty = minQty;
-    } else throw new Error(`Quantidade inválida no modelo de pedido: ${quantity}`);
+    } else
+      throw new Error(`Quantidade inválida no modelo de pedido: ${quantity}`);
 
     const stepSize = parseFloat(symbolObj.stepSize);
     const factor = Math.floor(newQty / stepSize);
@@ -509,7 +510,7 @@ export default class RiberBot {
   async placeOrder(user, automation, orderTemplate) {
     if (!user || !automation || !orderTemplate)
       throw new Error(
-        `Todos os parâmetros são obrigatórios. Usuário: ${!!user}, Automação: ${!!automation}, OT: ${!!orderTemplate}`
+        `Todos os parâmetros são obrigatórios. Usuário: ${!!user}, Automação: ${!!automation}, OT: ${!!orderTemplate}`,
       );
 
     const symbol = await symbolsRepository.getSymbol(orderTemplate.symbol);
@@ -635,7 +636,7 @@ export default class RiberBot {
       if (LOGS || automation.logs)
         logger(
           "A-" + automation.id,
-          `RiberBot avaliou uma condição em '${automation.name}'`
+          `RiberBot avaliou uma condição em '${automation.name}'`,
         );
 
       let result = {};
@@ -682,7 +683,7 @@ export default class RiberBot {
         logger(
           "A-" + automation.id,
           `Resultado para '${automation.name}' was ${JSON.stringify(
-            result
+            result,
           )} at ${new Date()}`,
         );
 
@@ -733,7 +734,7 @@ export default class RiberBot {
     if (automation.logs)
       logger(
         "A-" + automation.id,
-        `Telegram enviado pela automação '${automation.name}'!`
+        `Telegram enviado pela automação '${automation.name}'!`,
       );
     return {
       text: `Telegram enviado pela automação '${automation.name}'!`,
@@ -748,7 +749,7 @@ export default class RiberBot {
     if (automation.logs)
       logger(
         "A-" + automation.id,
-        `E-mail enviado pela automação '${automation.name}'!`
+        `E-mail enviado pela automação '${automation.name}'!`,
       );
     return {
       text: `E-mail enviado pela automação '${automation.name}'!`,
@@ -785,7 +786,7 @@ export default class RiberBot {
     if (LOGS || automation.logs) {
       logger(
         "A-" + automation.id,
-        `RiberBot tentando analizar:\n${evalCondition} at ${automation.name}`
+        `RiberBot tentando analizar:\n${evalCondition} at ${automation.name}`,
       );
       logger("A-" + automation.id, MEMORY);
     }
@@ -965,8 +966,8 @@ export default class RiberBot {
       logger(
         "riberBot -",
         `RiberBot memória atualizada: ${symbol}_${interval} => ${JSON.stringify(
-          calculatedIndexes
-        )} => execute? ${executeAutomations}`
+          calculatedIndexes,
+        )} => execute? ${executeAutomations}`,
       );
 
     return results;
@@ -1023,5 +1024,9 @@ export default class RiberBot {
       .sort((a, b) => {
         return a.variable < b.variable ? -1 : 1;
       });
+  }
+
+  async generateGrids(automation, levels, quantity, transaction) {
+    return true;
   }
 }
