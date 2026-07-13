@@ -3,10 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import SelectSymbol from "../../../components/SelectSymbol";
 import SwitchInput from "../../../components/SwitchInput";
-import {
-  getAutomation,
-  saveAutomation,
-} from "../../../services/AutomationsService";
+import { getAutomation, saveGrid } from "../../../services/AutomationsService";
 import { getSymbol } from "../../../services/SymbolsService";
 import SymbolInfo from "../../../components/SymbolInfo";
 import WalletSummary from "../../../components/WalletSummary";
@@ -58,8 +55,15 @@ export default function NewGrid() {
     getAutomation(id)
       .then((automation) => {
         setAutomation(automation);
+        const conditionSplit = automation.openCondition.split(" && ");
+        if (!conditionSplit || conditionSplit.length < 2) return;
 
-        //carregar state grid
+        setGrid({
+          lowerLimit: parseFloat(conditionSplit[0].split(">")[1]),
+          upperLimit: parseFloat(conditionSplit[1].split("<")[1]),
+          levels: automation.grids.length + 1,
+          quantity: parseFloat(automation.openTemplate.quantityMultiplier),
+        });
       })
       .catch((err) => {
         console.error(err.response ? err.response.data : err);
@@ -76,6 +80,13 @@ export default function NewGrid() {
     }));
   }
 
+  function onGridChange(event) {
+    setGrid((prevState) => ({
+      ...prevState,
+      [event.target.id]: event.target.value,
+    }));
+  }
+
   function btnSaveClick() {
     setMessage("");
 
@@ -86,12 +97,14 @@ export default function NewGrid() {
     automation.closeCondition = automation.openCondition;
     automation.isOpened = false;
 
-    // saveAutomation(automation.id, automation)
-    //     .then(result => navigate("/automations"))
-    //     .catch(err => {
-    //         console.error(err.response ? err.response.data : err);
-    //         setMessage(err.response ? JSON.stringify(err.response.data) : err.message);
-    //     })
+    saveGrid(automation.id, automation, grid.levels, grid.quantity)
+      .then((result) => navigate("/automations"))
+      .catch((err) => {
+        console.error(err.response ? err.response.data : err);
+        setMessage(
+          err.response ? JSON.stringify(err.response.data) : err.message,
+        );
+      });
   }
 
   return (
@@ -131,7 +144,7 @@ export default function NewGrid() {
               placeholder="0"
               value={grid.lowerLimit || ""}
               required={true}
-              onChange={onAutomationChange}
+              onChange={onGridChange}
             />
           </div>
         </div>
@@ -145,7 +158,7 @@ export default function NewGrid() {
               placeholder="0"
               value={grid.upperLimit || ""}
               required={true}
-              onChange={onAutomationChange}
+              onChange={onGridChange}
             />
           </div>
         </div>
@@ -161,7 +174,7 @@ export default function NewGrid() {
               placeholder="10"
               value={grid.levels || ""}
               required={true}
-              onChange={onAutomationChange}
+              onChange={onGridChange}
             />
           </div>
         </div>
@@ -170,10 +183,10 @@ export default function NewGrid() {
             id="quantity"
             quantity={grid.quantity || 0}
             isQuote={true}
-            text="Quantidade da Cotação:"
+            text={`Quantidade (${symbol.quote || ""}):`}
             symbol={symbol}
             allowQuote={true}
-            onChange={onAutomationChange}
+            onChange={onGridChange}
           />
         </div>
       </div>

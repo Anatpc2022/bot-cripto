@@ -3,6 +3,7 @@ import { getSymbol } from "../services/SymbolsService";
 
 /**
  * props:
+ * - text
  * - symbol
  * - quantity
  * - isQuote
@@ -30,7 +31,7 @@ export default function QuantityInput(props) {
 
   return (
     <div className="form-group">
-      <label htmlFor="quantity">Quantidade:</label>
+      <label htmlFor="quantity">{props.text || "Quantidade:"}</label>
       <div className="input-group">
         {props.allowQuote && symbol && symbol.base ? (
           <button
