@@ -10,6 +10,7 @@ import ordersRepository from "./repositories/ordersRepository.js";
 import Exchange from "./utils/exchange.js";
 import orderTemplatesRepository from "./repositories/orderTemplatesRepository.js";
 import gridsRepository from "./repositories/gridsRepository.js";
+import db from "./db.js";
 
 const LOGS = process.env.RIBERBOT_LOGS === "true";
 const INTERVAL = parseInt(process.env.AUTOMATION_INTERVAL || 0);
@@ -625,6 +626,69 @@ export default class RiberBot {
     return savedOrder;
   }
 
+  async gridEval(automation) {
+    automation.grids = automation.grids.sort((a, b) => a.id - b.id);
+
+    if (automation.logs)
+      logger(
+        "A-" + automation.id,
+        `RiberBot está na zona da grid em ${automation.name}`,
+      );
+
+    const tickerIndex = `${automation.symbol}:TICKER`;
+    const MEMORY = await this.cache.getAll(tickerIndex);
+
+    for (let i = 0; i < automation.grids.length; i++) {
+      const grid = automation.grids[i];
+      if (!Function("MEMORY", "return " + grid.condition)(MEMORY)) continue;
+
+      if (automation.logs)
+        logger(
+          "A-" + automation.id,
+          `RiberBot avaliou uma condição em ${automation.name} => ${grid.condition}`,
+        );
+
+      const user = await usersRepository.getUser(automation.userId);
+      const orderTemplate =
+        grid.side === ordersRepository.orderSide.BUY
+          ? automation.openTemplate
+          : automation.closeTemplate;
+      const result = await this.placeOrder(user, automation, orderTemplate);
+
+      if (result && automation.sendNotification)
+        await this.sendNotifications(user, automation, result);
+
+      if (!result || result.type === "error") return result || false;
+
+      const transaction = await db.transaction();
+
+      try {
+        await this.generateGrids(
+          automation,
+          automation.grids.length + 1,
+          orderTemplate.quantityMultiplier,
+          transaction,
+        );
+        await transaction.commit();
+      } catch (err) {
+        await transaction.rollback();
+        logger("A-" + automation.id, err);
+        return {
+          type: "error",
+          text: `RiberBot não é possível gerar grids para ${automation.name}. ${err.message}`,
+        };
+      }
+
+      automation = await automationsRepository.getAutomation(automation.id);
+      this.BRAIN[automation.id] = automation.get({ plain: true });
+      this.updateBrainIndex(tickerIndex, automation);
+
+      return result || true;
+    }
+
+    return false;
+  }
+
   async evalDecision(memoryKey, automation) {
     if (!automation || !memoryKey) return false;
 
@@ -634,6 +698,8 @@ export default class RiberBot {
 
       if (this.isLocked(automation.id)) return false;
       this.setLocked(automation.id, true);
+
+      if (automation.type === "GRID") return this.gridEval(automation);
 
       if (LOGS || automation.logs)
         logger(
@@ -691,10 +757,6 @@ export default class RiberBot {
 
       result.automationId = automation.id;
 
-      setTimeout(() => {
-        this.setLocked(automation.id, false);
-      }, INTERVAL);
-
       return result || false;
     } catch (err) {
       if (automation.logs) logger("A-" + automation.id, err);
@@ -703,6 +765,10 @@ export default class RiberBot {
         text: `Erro em evalDecision para '${automation.name}': ${err.message}`,
         automationId: automation.id,
       };
+    } finally {
+      setTimeout(() => {
+        this.setLocked(automation.id, false);
+      }, INTERVAL);
     }
   }
 
@@ -825,6 +891,7 @@ export default class RiberBot {
     if (!automation.openTemplateId && !automation.closeTemplateId) return false;
 
     return (
+      automation.type === "GRID" ||
       memoryKey.indexOf(`:${indexes.indexKeys.LAST_ORDER}`) !== -1 ||
       memoryKey.indexOf(`:${indexes.indexKeys.AUTO_ORDER}`) !== -1 ||
       memoryKey.indexOf(`:${indexes.indexKeys.LAST_CANDLE}`) !== -1 ||
