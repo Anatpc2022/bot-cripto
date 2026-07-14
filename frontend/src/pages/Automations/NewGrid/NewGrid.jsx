@@ -8,6 +8,8 @@ import { getSymbol } from "../../../services/SymbolsService";
 import SymbolInfo from "../../../components/SymbolInfo";
 import WalletSummary from "../../../components/WalletSummary";
 import QuantityInput from "../../../components/QuantityInput";
+import GridButton from "./GridButton";
+import GridTable from "./GridTable";
 
 export default function NewGrid() {
   const navigate = useNavigate();
@@ -107,6 +109,11 @@ export default function NewGrid() {
       });
   }
 
+  const [isGridView, setIsGridView] = useState(false);
+  function onViewGridClick(event) {
+    setIsGridView(!isGridView);
+  }
+
   return (
     <FormPage title={`${id ? "Editar" : "Nova"} Automação de Grid`}>
       <div className="row mb-3">
@@ -128,101 +135,107 @@ export default function NewGrid() {
           )}
         </div>
       </div>
-      <div className="row mb-3">
-        <div className="col-6">
-          <WalletSummary symbol={automation.symbol} />
-        </div>
-      </div>
-      <div className="row mb-3">
-        <div className="col-3">
-          <div className="form-group">
-            <label htmlFor="lowerLimit">Limite inferior:</label>
-            <input
-              type="number"
-              className="form-control"
-              id="lowerLimit"
-              placeholder="0"
-              value={grid.lowerLimit || ""}
-              required={true}
-              onChange={onGridChange}
-            />
+      {isGridView ? (
+        <GridTable data={automation.grids} />
+      ) : (
+        <>
+          <div className="row mb-3">
+            <div className="col-6">
+              <WalletSummary symbol={automation.symbol} />
+            </div>
           </div>
-        </div>
-        <div className="col-3">
-          <div className="form-group">
-            <label htmlFor="upperLimit">Limite superior:</label>
-            <input
-              type="number"
-              className="form-control"
-              id="upperLimit"
-              placeholder="0"
-              value={grid.upperLimit || ""}
-              required={true}
-              onChange={onGridChange}
-            />
+          <div className="row mb-3">
+            <div className="col-3">
+              <div className="form-group">
+                <label htmlFor="lowerLimit">Limite inferior:</label>
+                <input
+                  type="number"
+                  className="form-control"
+                  id="lowerLimit"
+                  placeholder="0"
+                  value={grid.lowerLimit || ""}
+                  required={true}
+                  onChange={onGridChange}
+                />
+              </div>
+            </div>
+            <div className="col-3">
+              <div className="form-group">
+                <label htmlFor="upperLimit">Limite superior:</label>
+                <input
+                  type="number"
+                  className="form-control"
+                  id="upperLimit"
+                  placeholder="0"
+                  value={grid.upperLimit || ""}
+                  required={true}
+                  onChange={onGridChange}
+                />
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
-      <div className="row mb-3">
-        <div className="col-3">
-          <div className="form-group">
-            <label htmlFor="levels">Faixas:</label>
-            <input
-              type="number"
-              className="form-control"
-              id="levels"
-              placeholder="10"
-              value={grid.levels || ""}
-              required={true}
-              onChange={onGridChange}
-            />
+          <div className="row mb-3">
+            <div className="col-3">
+              <div className="form-group">
+                <label htmlFor="levels">Níveis:</label>
+                <input
+                  type="number"
+                  className="form-control"
+                  id="levels"
+                  placeholder="10"
+                  value={grid.levels || ""}
+                  required={true}
+                  onChange={onGridChange}
+                />
+              </div>
+            </div>
+            <div className="col-3">
+              <QuantityInput
+                id="quantity"
+                quantity={grid.quantity || 0}
+                isQuote={true}
+                text={`Quantidade (${symbol.quote || ""}):`}
+                symbol={symbol}
+                allowQuote={true}
+                onChange={onGridChange}
+              />
+            </div>
           </div>
-        </div>
-        <div className="col-3">
-          <QuantityInput
-            id="quantity"
-            quantity={grid.quantity || 0}
-            isQuote={true}
-            text={`Quantidade (${symbol.quote || ""}):`}
-            symbol={symbol}
-            allowQuote={true}
-            onChange={onGridChange}
-          />
-        </div>
-      </div>
 
-      <div className="row mb-3 mt-4">
-        <div className="col-2">
-          <div className="form-group">
-            <SwitchInput
-              id="isActive"
-              text="Está ativo?"
-              onChange={onAutomationChange}
-              isChecked={automation.isActive}
-            />
+          <div className="row mb-3 mt-4">
+            <div className="col-2">
+              <div className="form-group">
+                <SwitchInput
+                  id="isActive"
+                  text="Está ativo?"
+                  onChange={onAutomationChange}
+                  isChecked={automation.isActive}
+                />
+              </div>
+            </div>
+            <div className="col-2">
+              <div className="form-group">
+                <SwitchInput
+                  id="sendNotification"
+                  text="Enviar notificações?"
+                  onChange={onAutomationChange}
+                  isChecked={automation.sendNotification}
+                />
+              </div>
+            </div>
+            <div className="col-2">
+              <div className="form-group">
+                <SwitchInput
+                  id="logs"
+                  text="Ativar registros?"
+                  onChange={onAutomationChange}
+                  isChecked={automation.logs}
+                />
+              </div>
+            </div>
           </div>
-        </div>
-        <div className="col-2">
-          <div className="form-group">
-            <SwitchInput
-              id="sendNotification"
-              text="Enviar notificações?"
-              onChange={onAutomationChange}
-              isChecked={automation.sendNotification}
-            />
-          </div>
-        </div>
-        <div className="col-2">
-          <div className="form-group">
-            <SwitchInput
-              id="logs"
-              text="Ativar registros?"
-              onChange={onAutomationChange}
-              isChecked={automation.logs}
-            />
-          </div>
-        </div>
-      </div>
+        </>
+      )}
       <div className="row">
         <div className="col-3">
           <button
@@ -232,6 +245,7 @@ export default function NewGrid() {
           >
             Salvar Grid
           </button>
+          <GridButton id={automation.id} onClick={onViewGridClick} />
           <a href="/automations" className="btn btn-light">
             Cancelar
           </a>
