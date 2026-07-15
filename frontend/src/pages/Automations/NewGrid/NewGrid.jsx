@@ -92,14 +92,7 @@ export default function NewGrid() {
   function btnSaveClick() {
     setMessage("");
 
-    automation.name = `GRID ${automation.symbol} #${grid.levels}`;
-    automation.openIndexes = `${automation.symbol}:TICKER`;
-    automation.openCondition = `MEMORY['${automation.symbol}:TICKER'].current.close>${grid.lowerLimit} && MEMORY['${automation.symbol}:TICKER'].current.close<${grid.upperLimit}`;
-    automation.closeIndexes = automation.openIndexes;
-    automation.closeCondition = automation.openCondition;
-    automation.isOpened = false;
-
-    saveGrid(automation.id, automation, grid.levels, grid.quantity)
+    saveGrid(automation.id, { ...automation, ...grid })
       .then((result) => navigate("/automations"))
       .catch((err) => {
         console.error(err.response ? err.response.data : err);
@@ -182,7 +175,7 @@ export default function NewGrid() {
                   type="number"
                   className="form-control"
                   id="levels"
-                  placeholder="10"
+                  placeholder="0"
                   value={grid.levels || ""}
                   required={true}
                   onChange={onGridChange}
@@ -237,7 +230,7 @@ export default function NewGrid() {
         </>
       )}
       <div className="row">
-        <div className="col-3">
+        <div className="col-4">
           <button
             type="button"
             className="btn btn-primary"

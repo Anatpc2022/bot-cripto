@@ -26,18 +26,15 @@ export async function saveAutomation(id, newAutomation) {
   return response.data;
 }
 
-export async function saveGrid(id, newAutomation, levels, quantity) {
+export async function saveGrid(id, newGridAutomation) {
   let response;
   if (id)
     response = await axios.patch(
-      `${AUTOMATIONS_URL}/${id}?levels=${levels}&quantity=${quantity}`,
-      newAutomation,
+      `${AUTOMATIONS_URL}/grid/${id}`,
+      newGridAutomation,
     );
   else
-    response = await axios.post(
-      `${AUTOMATIONS_URL}?levels=${levels}&quantity=${quantity}`,
-      newAutomation,
-    );
+    response = await axios.post(`${AUTOMATIONS_URL}/grid/`, newGridAutomation);
 
   return response.data;
 }

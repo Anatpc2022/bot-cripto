@@ -29,12 +29,121 @@ async function getAutomations(req, res) {
   return res.json(automations);
 }
 
+function buildGridAutomation(gridData, userId) {
+  const { symbol, quantity, levels, lowerLimit, upperLimit } = gridData;
+
+  if (!quantity || !levels || !symbol || !lowerLimit || !upperLimit)
+    throw new Error(`Invalid grid params.`);
+
+  const automation = {};
+  automation.symbol = symbol;
+  automation.type = "GRID";
+  automation.userId = userId;
+  automation.name = `GRID ${symbol} #${levels}`;
+  automation.closeIndexes = automation.openIndexes = `${symbol}:TICKER`;
+  automation.closeCondition =
+    automation.openCondition = `MEMORY['${symbol}:TICKER'].current.close>${lowerLimit} && MEMORY['${symbol}:TICKER'].current.close<${upperLimit}`;
+  automation.isOpened = false;
+  automation.sendNotification = !!gridData.sendNotification;
+  automation.isActive = !!gridData.isActive;
+  automation.logs = !!gridData.logs;
+
+  if (!validateConditions(automation.openCondition))
+    throw new Error(`Invalid grid condition`);
+
+  return automation;
+}
+
+async function insertGridAutomation(req, res) {
+  const userId = res.locals.token.id;
+  const newAutomation = buildGridAutomation(req.body, userId);
+
+  const alreadyExists = await automationsRepository.automationExists(
+    userId,
+    newAutomation.symbol,
+    newAutomation.name,
+  );
+  if (alreadyExists) return res.sendStatus(409);
+
+  const transaction = await db.transaction();
+  let savedAutomation;
+
+  try {
+    const quantity = parseFloat(req.body.quantity);
+    const buyOrderTemplate = await orderTemplatesRepository.insertOrderTemplate(
+      {
+        name: newAutomation.name + " COMPRA",
+        symbol: newAutomation.symbol,
+        type: "MARKET",
+        side: "BUY",
+        userId,
+        limitPrice: null,
+        limitPriceMultiplier: 1,
+        stopPrice: null,
+        stopPriceMultiplier: 1,
+        quantity: "QUOTE_QTY",
+        quantityMultiplier: quantity,
+      },
+      transaction,
+    );
+    newAutomation.openTemplateId = buyOrderTemplate.id;
+
+    const sellOrderTemplate =
+      await orderTemplatesRepository.insertOrderTemplate(
+        {
+          name: newAutomation.name + " VENDA",
+          symbol: newAutomation.symbol,
+          type: "MARKET",
+          side: "SELL",
+          userId,
+          limitPrice: null,
+          limitPriceMultiplier: 1,
+          stopPrice: null,
+          stopPriceMultiplier: 1,
+          quantity: "QUOTE_QTY",
+          quantityMultiplier: quantity,
+        },
+        transaction,
+      );
+    newAutomation.closeTemplateId = sellOrderTemplate.id;
+
+    savedAutomation = await automationsRepository.insertAutomation(
+      newAutomation,
+      transaction,
+    );
+    savedAutomation.openTemplate = buyOrderTemplate;
+    savedAutomation.closeTemplate = sellOrderTemplate;
+
+    const levels = parseInt(req.body.levels);
+    await RiberBot.getInstance().generateGrids(
+      savedAutomation,
+      levels,
+      quantity,
+      transaction,
+    );
+
+    await transaction.commit();
+  } catch (err) {
+    await transaction.rollback();
+    logger("system", err);
+    return res.status(500).send(err.message);
+  }
+
+  if (savedAutomation.isActive) {
+    savedAutomation = await automationsRepository.getAutomation(
+      savedAutomation.id,
+    );
+    RiberBot.getInstance().updateBrain(savedAutomation.get({ plain: true }));
+  }
+
+  res.status(201).json(savedAutomation.get({ plain: true }));
+}
+
 async function insertAutomation(req, res) {
   const userId = res.locals.token.id;
   const newAutomation = req.body;
   newAutomation.userId = userId;
-
-  const { quantity, levels } = req.query;
+  newAutomation.type = "REGULAR";
 
   const alreadyExists = await automationsRepository.automationExists(
     userId,
@@ -49,69 +158,14 @@ async function insertAutomation(req, res) {
   )
     return res.sendStatus(422);
 
-  const isGrid = newAutomation.type === "GRID";
-  if (isGrid && (!quantity || !levels))
-    return res.status(422).send(`Invalid grid params.`);
-
   const transaction = await db.transaction();
   let savedAutomation;
 
   try {
-    let buyOrderTemplate, sellOrderTemplate;
-    if (isGrid) {
-      buyOrderTemplate = await orderTemplatesRepository.insertOrderTemplate(
-        {
-          name: newAutomation.name + " COMPRA",
-          symbol: newAutomation.symbol,
-          type: "MARKET",
-          side: "BUY",
-          userId: newAutomation.userId,
-          limitPrice: null,
-          limitPriceMultiplier: 1,
-          stopPrice: null,
-          stopPriceMultiplier: 1,
-          quantity: "QUOTE_QTY",
-          quantityMultiplier: quantity,
-        },
-        transaction,
-      );
-      newAutomation.openTemplateId = buyOrderTemplate.id;
-
-      sellOrderTemplate = await orderTemplatesRepository.insertOrderTemplate(
-        {
-          name: newAutomation.name + " VENDA",
-          symbol: newAutomation.symbol,
-          type: "MARKET",
-          side: "SELL",
-          userId: newAutomation.userId,
-          limitPrice: null,
-          limitPriceMultiplier: 1,
-          stopPrice: null,
-          stopPriceMultiplier: 1,
-          quantity: "QUOTE_QTY",
-          quantityMultiplier: quantity,
-        },
-        transaction,
-      );
-      newAutomation.closeTemplateId = sellOrderTemplate.id;
-    }
-
     savedAutomation = await automationsRepository.insertAutomation(
       newAutomation,
       transaction,
     );
-
-    if (isGrid) {
-      savedAutomation.openTemplate = buyOrderTemplate;
-      savedAutomation.closeTemplate = sellOrderTemplate;
-      await RiberBot.getInstance().generateGrids(
-        savedAutomation,
-        levels,
-        quantity,
-        transaction,
-      );
-    }
-
     await transaction.commit();
   } catch (err) {
     await transaction.rollback();
@@ -120,10 +174,56 @@ async function insertAutomation(req, res) {
   }
 
   if (savedAutomation.isActive) {
+    savedAutomation = await automationsRepository.getAutomation(
+      savedAutomation.id,
+    );
     RiberBot.getInstance().updateBrain(savedAutomation.get({ plain: true }));
   }
 
   res.status(201).json(savedAutomation.get({ plain: true }));
+}
+
+async function updateGridAutomation(req, res) {
+  const userId = res.locals.token.id;
+  const id = req.params.id;
+  const newAutomation = buildGridAutomation(req.body, userId);
+
+  const currentAutomation = await automationsRepository.getAutomation(id);
+  if (!currentAutomation) return res.sendStatus(404);
+  if (currentAutomation.userId !== userId) return res.sendStatus(403);
+
+  RiberBot.getInstance().deleteBrain(currentAutomation);
+
+  const transaction = await db.transaction();
+  let updatedAutomation;
+
+  try {
+    updatedAutomation = await automationsRepository.updateAutomation(
+      id,
+      newAutomation,
+      transaction,
+    );
+    await RiberBot.getInstance().generateGrids(
+      updatedAutomation,
+      parseInt(req.body.levels),
+      parseFloat(req.body.quantity),
+      transaction,
+    );
+    await transaction.commit();
+  } catch (err) {
+    await transaction.rollback();
+    logger("system", err);
+    return res.status(500).send(err.message);
+  }
+
+  updatedAutomation = await automationsRepository.getAutomation(
+    updatedAutomation.id,
+  );
+  if (updatedAutomation.isActive) {
+    RiberBot.getInstance().updateBrain(updatedAutomation.get({ plain: true }));
+  }
+
+  res.json(updatedAutomation.get({ plain: true }));
 }
 
 async function updateAutomation(req, res) {
@@ -131,12 +231,7 @@ async function updateAutomation(req, res) {
   const id = req.params.id;
   const newAutomation = req.body;
   newAutomation.userId = userId;
-
-  const { quantity, levels } = req.query;
-
-  const isGrid = newAutomation.type === "GRID";
-  if (isGrid && (!quantity || !levels))
-    return res.status(422).send(`Invalid grid params.`);
+  newAutomation.type = "REGULAR";
 
   if (
     !validateConditions(newAutomation.openCondition) &&
@@ -159,15 +254,6 @@ async function updateAutomation(req, res) {
       newAutomation,
       transaction,
     );
-
-    if (isGrid)
-      await RiberBot.getInstance().generateGrids(
-        updatedAutomation,
-        levels,
-        quantity,
-        transaction,
-      );
-
     await transaction.commit();
   } catch (err) {
     await transaction.rollback();
@@ -217,7 +303,7 @@ async function deleteAutomation(req, res) {
     await transaction.commit();
   } catch (err) {
     await transaction.rollback();
-    logger("A-" + currentAutomation.id, err);
+    logger(`A-${currentAutomation.id}`, err);
     return res.status(500).json(err.message);
   }
 
@@ -266,4 +352,6 @@ export default {
   deleteAutomation,
   startAutomation,
   stopAutomation,
+  insertGridAutomation,
+  updateGridAutomation,
 };
