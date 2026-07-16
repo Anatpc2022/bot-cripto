@@ -78,7 +78,7 @@ async function updateOrder(currentOrder, newOrder) {
     newOrder.status &&
     newOrder.status !== currentOrder.status &&
     [orderStatus.NEW, orderStatus.PARTIALLY_FILLED].includes(
-      currentOrder.status
+      currentOrder.status,
     )
   )
     currentOrder.status = newOrder.status;
@@ -169,8 +169,29 @@ async function removeAutomationFromOrders(automationId, transaction) {
     {
       where: { automationId },
       transaction,
-    }
+    },
   );
+}
+
+async function getReportOrders(userId, quoteAsset, startDate, endDate) {
+  startDate = startDate || 0;
+  endDate = endDate || Date.now();
+
+  const where = {
+    userId,
+    symbol: { [Sequelize.Op.like]: `%${quoteAsset}` },
+    transactTime: { [Sequelize.Op.between]: [startDate, endDate] },
+    status: orderStatus.FILLED,
+    net: { [Sequelize.Op.gt]: 0 },
+  };
+
+  return orderModel.findAll({
+    where,
+    order: [["transactTime", "ASC"]],
+    include: AutomationModel,
+    raw: true,
+    distinct: true,
+  });
 }
 
 export default {
@@ -189,4 +210,5 @@ export default {
   getLastFilledOrders,
   getLastAutomationOrders,
   removeAutomationFromOrders,
+  getReportOrders,
 };
