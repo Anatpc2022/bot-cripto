@@ -3,6 +3,8 @@ const router = express.Router();
 
 import ordersController from "../controllers/ordersController.js";
 
+router.get("/reports/:quote", ordersController.getOrdersReport);
+
 router.get("/:id", ordersController.getOrder);
 
 router.get("/", ordersController.getOrders);

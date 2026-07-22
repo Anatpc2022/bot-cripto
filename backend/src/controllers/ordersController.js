@@ -47,7 +47,7 @@ async function syncOrder(req, res) {
   try {
     const binanceOrder = await exchange.orderStatus(
       order.symbol,
-      order.orderId
+      order.orderId,
     );
 
     order.status = binanceOrder.status;
@@ -56,7 +56,7 @@ async function syncOrder(req, res) {
     if (binanceOrder.status === ordersRepository.orderStatus.FILLED) {
       const binanceTrade = await exchange.orderTrade(
         order.symbol,
-        order.orderId
+        order.orderId,
       );
       const quoteQuantity = parseFloat(binanceOrder.cummulativeQuoteQty);
 
@@ -117,10 +117,76 @@ async function placeOrder(req, res) {
   }
 }
 
+async function getOrdersReport(req, res, next) {
+  if (req.query.date) return getDayTradeReport(req, res, next);
+  else return getMonthReport(req, res, next);
+}
+
+async function getDayTradeReport(req, res) {}
+
+function thirtyDaysAgo() {
+  const date = new Date();
+  date.setUTCDate(date.getUTCDate() - 30);
+  date.setUTCHours(0, 0, 0, 0);
+  return date.getTime();
+}
+
+function getToday() {
+  const date = new Date();
+  date.setUTCHours(23, 59, 59, 999);
+  return date.getTime();
+}
+
+const EMPTY_REPORT = {
+  orders: 0,
+  buyVolume: 0,
+  sellVolume: 0,
+  wallet: 0,
+  profit: 0,
+  profitPerc: 0,
+  subs: [],
+  series: [],
+  automations: [],
+};
+
+async function getMonthReport(req, res) {
+  const userId = res.locals.token.id;
+  const quote = req.params.quote;
+
+  let startDate = req.query.startDate
+    ? parseInt(req.query.startDate)
+    : thirtyDaysAgo();
+  let endDate = req.query.endDate ? parseInt(req.query.endDate) : getToday();
+
+  if (endDate - startDate > 30 * 24 * 60 * 60 * 1000)
+    startDate = thirtyDaysAgo();
+
+  const orders = await ordersRepository.getReportOrders(
+    userId,
+    quote,
+    startDate,
+    endDate,
+  );
+  if (!orders || !orders.length)
+    return res.json({ ...EMPTY_REPORT, quote, startDate, endDate });
+
+  //cálculos para relatório
+
+  res.json({
+    ...EMPTY_REPORT,
+    quote,
+    orders: orders.length,
+    startDate,
+    endDate,
+    data: orders,
+  });
+}
+
 export default {
   getOrder,
   getOrders,
   placeOrder,
   syncOrder,
   cancelOrder,
+  getOrdersReport,
 };
