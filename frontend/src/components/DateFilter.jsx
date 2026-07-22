@@ -5,7 +5,12 @@ import { useState } from "react";
  * - onClick
  */
 export default function DateFilter(props) {
-  const [filter, setFilter] = useState({});
+  const [filter, setFilter] = useState({
+    startDate: new Intl.DateTimeFormat("en-GB").format(
+      new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+    ),
+    endDate: new Intl.DateTimeFormat("en-GB").format(new Date()),
+  });
 
   function parseDate(str) {
     const split = str.split("/");
