@@ -123,7 +123,85 @@ async function getOrdersReport(req, res, next) {
   else return getMonthReport(req, res, next);
 }
 
-async function getDayTradeReport(req, res) {}
+function getStartToday() {
+  const date = new Date();
+  date.setUTCHours(0, 0, 0, 0);
+  return date.getTime();
+}
+
+async function getDayTradeReport(req, res) {
+  const userId = res.locals.token.id;
+  const quote = req.params.quote;
+
+  let startDate = req.query.date ? parseInt(req.query.date) : getStartToday();
+  let endDate =
+    startDate + 23 * 60 * 60 * 1000 + 59 * 60 * 1000 + 59 * 1000 + 999;
+
+  //permitir apenas 24h
+  if (endDate - startDate > 24 * 60 * 60 * 1000) startDate = getStartToday();
+
+  const orders = await ordersRepository.getReportOrders(
+    userId,
+    quote,
+    startDate,
+    endDate,
+  );
+  if (!orders || !orders.length)
+    return res.json({ ...EMPTY_REPORT, quote, startDate, endDate });
+
+  const subs = [];
+  const series = [];
+
+  for (let i = 0; i < 24; i++) {
+    const newDate = new Date(startDate);
+    newDate.setUTCHours(i, 0, 0, 0);
+    subs.push(`${i}h`);
+
+    const lastMoment = new Date(newDate.getTime());
+    lastMoment.setUTCMinutes(59, 59, 999);
+
+    const partialBuy = calcVolume(
+      orders,
+      "BUY",
+      newDate.getTime(),
+      lastMoment.getTime(),
+    );
+    const partialSell = calcVolume(
+      orders,
+      "SELL",
+      newDate.getTime(),
+      lastMoment.getTime(),
+    );
+    series.push(partialSell - partialBuy);
+  }
+
+  const buyVolume = calcVolume(orders, "BUY");
+  const sellVolume = calcVolume(orders, "SELL");
+  const profit = sellVolume - buyVolume;
+
+  const wallet = await RiberBot.getInstance().getMemory(
+    quote,
+    "WALLET_" + userId,
+  );
+  const profitPerc = (profit * 100) / (parseFloat(wallet) - profit);
+
+  const automations = groupByAutomations(orders);
+
+  res.json({
+    quote,
+    orders: orders.length,
+    buyVolume,
+    sellVolume,
+    wallet,
+    profit,
+    profitPerc,
+    startDate,
+    endDate,
+    subs,
+    series,
+    automations,
+  });
+}
 
 function thirtyDaysAgo() {
   const date = new Date();
@@ -163,6 +241,27 @@ function calcVolume(orders, side, startTime, endTime) {
   if (!filteredOrders || !filteredOrders.length) return 0;
 
   return filteredOrders.map((o) => parseFloat(o.net)).reduce((a, b) => a + b);
+}
+
+function groupByAutomations(orders) {
+  const automationsObj = {};
+  orders.forEach((o) => {
+    const automationId = o.automationId || "M";
+    if (!automationsObj[automationId])
+      automationsObj[automationId] = {
+        name: o.automationId ? o["automation.name"] : "Others",
+        executions: 1,
+        net: 0,
+      };
+    else automationsObj[automationId].executions++;
+
+    if (o.side === "BUY") automationsObj[automationId].net -= parseFloat(o.net);
+    else automationsObj[automationId].net += parseFloat(o.net);
+  });
+
+  return Object.keys(automationsObj)
+    .map((k) => automationsObj[k])
+    .sort((a, b) => b.net - a.net);
 }
 
 async function getMonthReport(req, res) {
@@ -224,7 +323,7 @@ async function getMonthReport(req, res) {
   );
   const profitPerc = (profit * 100) / (parseFloat(wallet) - profit);
 
-  //agrupamento por automações
+  const automations = groupByAutomations(orders);
 
   res.json({
     quote,
@@ -238,7 +337,7 @@ async function getMonthReport(req, res) {
     endDate,
     subs,
     series,
-    automations: [],
+    automations,
   });
 }
 
