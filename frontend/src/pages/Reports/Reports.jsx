@@ -5,6 +5,7 @@ import {
   getOrdersReport,
 } from "../../services/OrdersService";
 import DateFilter from "../../components/DateFilter";
+import LineChart from "./LineChart";
 
 export default function Reports() {
   const [filter, setFilter] = useState({ symbol: "USDT" });
@@ -60,7 +61,7 @@ export default function Reports() {
           </div>
         </div>
       </div>
-      {JSON.stringify(report)}
+      <LineChart data={report} />
     </TemplatePage>
   );
 }
