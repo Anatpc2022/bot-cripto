@@ -12,6 +12,7 @@ import NewAutomation from "./pages/Automations/NewAutomation/NewAutomation";
 import OrderTemplates from "./pages/OrderTemplates/OrderTemplates";
 import NewOrderTemplate from "./pages/OrderTemplates/NewOrderTemplate";
 import NewGrid from "./pages/Automations/NewGrid/NewGrid";
+import Reports from "./pages/Reports/Reports";
 
 function Router() {
   function PrivateRoute({ children }) {
@@ -52,6 +53,14 @@ function Router() {
           element={
             <PrivateRoute>
               <Orders />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/reports"
+          element={
+            <PrivateRoute>
+              <Reports />
             </PrivateRoute>
           }
         />

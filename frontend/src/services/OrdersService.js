@@ -22,7 +22,7 @@ export async function cancelOrder(symbol, orderId) {
 export async function syncOrder(riberBotOrderId) {
   const response = await axios.post(
     `${ORDERS_URL}/${riberBotOrderId}/sync`,
-    null
+    null,
   );
   return response.data;
 }
@@ -52,5 +52,22 @@ export async function placeOrder(order) {
   }
 
   const response = await axios.post(ORDERS_URL, postOrder);
+  return response.data;
+}
+
+export async function getOrdersReport(symbol, startDate, endDate) {
+  startDate = startDate ? startDate.getTime() : 0;
+  endDate = endDate ? endDate.getTime() : Date.now();
+
+  const url = `${ORDERS_URL}/reports/${symbol}?startDate=${startDate}&endDate=${endDate}`;
+  const response = await axios.get(url);
+  return response.data;
+}
+
+export async function getDayTradeReport(symbol, date) {
+  date = date ? date.getTime() : 1;
+
+  const url = `${ORDERS_URL}/reports/${symbol}?date=${date}`;
+  const response = await axios.get(url);
   return response.data;
 }
