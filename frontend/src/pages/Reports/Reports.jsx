@@ -7,6 +7,8 @@ import {
 import DateFilter from "../../components/DateFilter";
 import LineChart from "./LineChart";
 import InfoBlock from "../../components/InfoBlock";
+import AutomationReport from "./AutomationReport";
+import Wallet from "../../components/Wallet/Wallet";
 
 export default function Reports() {
   const [filter, setFilter] = useState({ symbol: "USDT" });
@@ -139,6 +141,14 @@ export default function Reports() {
             ></path>
           </svg>
         </InfoBlock>
+      </div>
+      <div className="row">
+        <div className="col-6">
+          <AutomationReport data={report.automations} />
+        </div>
+        <div className="col-6">
+          <Wallet />
+        </div>
       </div>
     </TemplatePage>
   );

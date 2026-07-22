@@ -14,10 +14,10 @@ function WalletRow(props) {
                 <img className="me-2" width="16" src={`/img/icons/${props.symbol.toLowerCase()}.svg`} />
                 {props.symbol}
             </td>
-            <td className="text-gray-900">
+            <td className="text-gray-900 text-center">
                 {props.available.substring(0, 10)}
             </td>
-            <td className="text-gray-900">
+            <td className="text-gray-900 text-center">
                 {props.onOrder.substring(0, 10)}
             </td>
         </tr>
