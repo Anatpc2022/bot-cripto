@@ -4,13 +4,14 @@ import {
   getDayTradeReport,
   getOrdersReport,
 } from "../../services/OrdersService";
+import DateFilter from "../../components/DateFilter";
 
 export default function Reports() {
   const [filter, setFilter] = useState({ symbol: "USDT" });
   const [report, setReport] = useState({});
 
   useEffect(() => {
-    getOrdersReport(filter.symbol)
+    getOrdersReport(filter.symbol, filter.startDate, filter.endDate)
       .then((report) => setReport(report))
       .catch((err) => console.error(err));
   }, [filter]);
@@ -19,6 +20,14 @@ export default function Reports() {
     setFilter((prevState) => ({
       ...prevState,
       [evt.target.id]: evt.target.value,
+    }));
+  }
+
+  function onDateChange(evt) {
+    setFilter((prevState) => ({
+      ...prevState,
+      startDate: evt.startDate,
+      endDate: evt.endDate,
     }));
   }
 
@@ -46,10 +55,12 @@ export default function Reports() {
               <option value="USDT">USDT</option>
             </select>
           </div>
-          <div></div>
+          <div>
+            <DateFilter onClick={onDateChange} />
+          </div>
         </div>
-        {JSON.stringify(report)}
       </div>
+      {JSON.stringify(report)}
     </TemplatePage>
   );
 }
