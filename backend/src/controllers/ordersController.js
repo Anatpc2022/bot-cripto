@@ -1,6 +1,7 @@
 import ordersRepository from "../repositories/ordersRepository.js";
 import Exchange from "../utils/exchange.js";
 import logger from "../utils/logger.js";
+import RiberBot from "../riberBot.js";
 
 async function getOrder(req, res) {
   const userId = res.locals.token.id;
@@ -149,6 +150,21 @@ const EMPTY_REPORT = {
   automations: [],
 };
 
+function calcVolume(orders, side, startTime, endTime) {
+  startTime = startTime || 0;
+  endTime = endTime || Date.now();
+
+  const filteredOrders = orders.filter(
+    (o) =>
+      o.transactTime >= startTime &&
+      o.transactTime < endTime &&
+      o.side === side,
+  );
+  if (!filteredOrders || !filteredOrders.length) return 0;
+
+  return filteredOrders.map((o) => parseFloat(o.net)).reduce((a, b) => a + b);
+}
+
 async function getMonthReport(req, res) {
   const userId = res.locals.token.id;
   const quote = req.params.quote;
@@ -170,15 +186,59 @@ async function getMonthReport(req, res) {
   if (!orders || !orders.length)
     return res.json({ ...EMPTY_REPORT, quote, startDate, endDate });
 
-  //cálculos para relatório
+  const daysInRage = Math.ceil((endDate - startDate) / (24 * 60 * 60 * 1000));
+
+  const subs = [];
+  const series = [];
+
+  for (let i = 0; i < daysInRage; i++) {
+    const newDate = new Date(startDate);
+    newDate.setUTCDate(newDate.getUTCDate() + i);
+    subs.push(`${newDate.getUTCDate()}/${newDate.getUTCMonth() + 1}`);
+
+    const lastMoment = new Date(newDate.getTime());
+    lastMoment.setUTCHours(23, 59, 59, 999);
+
+    const partialBuy = calcVolume(
+      orders,
+      "BUY",
+      newDate.getTime(),
+      lastMoment.getTime(),
+    );
+    const partialSell = calcVolume(
+      orders,
+      "SELL",
+      newDate.getTime(),
+      lastMoment.getTime(),
+    );
+    series.push(partialSell - partialBuy);
+  }
+
+  const buyVolume = calcVolume(orders, "BUY");
+  const sellVolume = calcVolume(orders, "SELL");
+  const profit = sellVolume - buyVolume;
+
+  const wallet = await RiberBot.getInstance().getMemory(
+    quote,
+    "WALLET_" + userId,
+  );
+  const profitPerc = (profit * 100) / (parseFloat(wallet) - profit);
+
+  //agrupamento por automações
 
   res.json({
-    ...EMPTY_REPORT,
     quote,
     orders: orders.length,
+    buyVolume,
+    sellVolume,
+    wallet,
+    profit,
+    profitPerc,
     startDate,
     endDate,
-    data: orders,
+    subs,
+    series,
+    automations: [],
   });
 }
 
