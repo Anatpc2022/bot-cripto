@@ -9,7 +9,7 @@ async function getMemoryIndexes(req, res) {
   let userIndexes = [];
   if (monitors && monitors.length) {
     monitors = monitors.filter(
-      (m) => m.type === monitorsRepository.monitorTypes.CANDLES
+      (m) => m.type === monitorsRepository.monitorTypes.CANDLES,
     );
     userIndexes = monitors
       .filter((m) => m.indexes)
@@ -17,35 +17,35 @@ async function getMemoryIndexes(req, res) {
         m.indexes
           .split(",")
           .filter((ix) => ix)
-          .map((ix) => ix + "_" + m.interval)
+          .map((ix) => ix + "_" + m.interval),
       )
       .flat();
     userIndexes.push(
-      ...monitors.map((m) => `${indexes.indexKeys.LAST_CANDLE}_${m.interval}`)
+      ...monitors.map((m) => `${indexes.indexKeys.LAST_CANDLE}_${m.interval}`),
     );
     userIndexes.push(
       ...monitors.map(
-        (m) => `${indexes.indexKeys.PREVIOUS_CANDLE}_${m.interval}`
-      )
+        (m) => `${indexes.indexKeys.PREVIOUS_CANDLE}_${m.interval}`,
+      ),
     );
   }
 
   userIndexes.push(
     indexes.indexKeys.TICKER,
     `${indexes.indexKeys.WALLET}_${userId}`,
-    `${indexes.indexKeys.LAST_ORDER}_${userId}`
+    `${indexes.indexKeys.LAST_ORDER}_${userId}`,
   );
 
   const automations = await automationsRepository.getActiveAutomations(userId);
   if (automations && automations.length)
     automations.map((a) =>
-      userIndexes.push(`${indexes.indexKeys.AUTO_ORDER}_${a.id}`)
+      userIndexes.push(`${indexes.indexKeys.AUTO_ORDER}_${a.id}`),
     );
 
   let memory = await RiberBot.getInstance().getMemoryIndexes();
   memory = userIndexes
     .map((uix) =>
-      memory.filter((m) => new RegExp(`^(${uix}(\.|$))`).test(m.variable))
+      memory.filter((m) => new RegExp(`^(${uix}(\.|$))`).test(m.variable)),
     )
     .flat();
 
@@ -86,7 +86,7 @@ async function updateMemory(req, res) {
     indexName,
     interval,
     value,
-    true
+    true,
   );
   if (results && results.length) results = results.filter((r) => r);
   res.json(results);
@@ -96,6 +96,23 @@ function getAnalysisIndexes(req, res) {
   res.json(indexes.getAnalysisIndexes());
 }
 
+async function chat(req, res) {
+  const question = req.body.question;
+  const files = req.files;
+
+  console.log(files);
+  console.log(files.length);
+
+  //processamento da IA
+
+  res.json({ question, answer: "Questão recebida, aguarde resposta" });
+}
+
+async function cleanChat(req, res) {
+  //processamento da IA
+  res.sendStatus(204);
+}
+
 export default {
   getMemory,
   getBrain,
@@ -103,4 +120,6 @@ export default {
   updateMemory,
   getAnalysisIndexes,
   getMemoryIndexes,
+  chat,
+  cleanChat,
 };
