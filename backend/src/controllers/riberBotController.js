@@ -2,6 +2,7 @@ import RiberBot from "../riberBot.js";
 import indexes from "../utils/indexes.js";
 import monitorsRepository from "../repositories/monitorsRepository.js";
 import automationsRepository from "../repositories/automationsRepository.js";
+import riberBotAi from "../riberBot-ai.js";
 
 async function getMemoryIndexes(req, res) {
   const userId = res.locals.token.id;
@@ -105,11 +106,13 @@ async function chat(req, res) {
 
   //processamento da IA
 
-  res.json({ question, answer: "Questão recebida, aguarde resposta" });
+  const answer = await riberBotAi.chat(question);
+  res.json({ question, answer });
 }
 
 async function cleanChat(req, res) {
   //processamento da IA
+  await riberBotAi.cleanChat();
   res.sendStatus(204);
 }
 
