@@ -696,11 +696,16 @@ export default class RiberBot {
   async evalDecision(memoryKey, automation) {
     if (!automation || !memoryKey) return false;
 
-    try {
-      const isValid = await this.checkActivation(automation, memoryKey);
-      if (!isValid) return false;
+    /**
+     * MELHORIA SUGERIDA PARA MAIOR EFICIÊNCIA DO SEMÁFORO
+     * Ao tirar os dois ifs do try/finally, evitamos que os returns deles disparem o desbloqueio do cérebro por engano em casos de concorrência.
+     */
+    const isValid = await this.checkActivation(automation, memoryKey);
+    if (!isValid) return false;
 
-      if (this.isLocked(automation.id)) return false;
+    if (this.isLocked(automation.id)) return false;
+
+    try {
       this.setLocked(automation.id, true);
 
       if (automation.type === "GRID") return this.gridEval(automation);
