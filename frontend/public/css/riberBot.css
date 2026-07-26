@@ -132,3 +132,22 @@ svg {
   position: sticky;
   bottom: 0;
 }
+
+.spanChatRow {
+  font-size: 11px;
+  max-width: "80%";
+}
+
+.spanChatRow p {
+  font-size: 11px;
+  margin: 0;
+}
+
+.spanChatRow ul li {
+  font-size: 11px;
+}
+
+.spanChatRow h3 {
+  font-size: 11px;
+  font-weight: bold;
+}

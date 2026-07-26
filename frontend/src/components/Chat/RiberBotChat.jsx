@@ -1,4 +1,5 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import ChatRow from "./ChatRow";
 
 export default function RiberBotChat() {
   const [show, setShow] = useState(false);
@@ -8,6 +9,12 @@ export default function RiberBotChat() {
 
   const fileInputRef = useRef(null);
   const textInputRef = useRef(null);
+  const dummyRef = useRef(null);
+
+  useEffect(() => {
+    if (dummyRef.current)
+      dummyRef.current.scrollIntoView({ behavior: "smooth" });
+  }, [messages, show]);
 
   function closeChat() {
     setShow(false);
@@ -17,6 +24,28 @@ export default function RiberBotChat() {
   function onFilesChange(event) {
     const files = Array.from(event.target.files);
     setNewFiles((prevState) => [...prevState, ...files]);
+  }
+
+  function startTimeouts() {
+    const timeout = setTimeout(() => {
+      const botResponse = {
+        text: "Estou analisando a sua mensagem, aguarde um instante...",
+        sender: "bot",
+        temp: true,
+      };
+      setMessages((prevState) => [...prevState, botResponse]);
+    }, 1000);
+
+    const timeout2 = setTimeout(() => {
+      const botResponse = {
+        text: "Ainda analisando, aguarde mais um pouco..",
+        sender: "bot",
+        temp: true,
+      };
+      setMessages((prevState) => [...prevState, botResponse]);
+    }, 3000);
+
+    return [timeout, timeout2];
   }
 
   function btnSendClick() {
@@ -30,6 +59,8 @@ export default function RiberBotChat() {
     setNewFiles([]);
     fileInputRef.current.value = "";
     textInputRef.current.focus();
+
+    const timeouts = startTimeouts();
 
     //enviar mensagem
   }
@@ -67,7 +98,10 @@ export default function RiberBotChat() {
           <div className="messages-container mb-2 divMessages">
             {!messages || !messages.length
               ? defaultMessage
-              : messages.map((msg) => <div>{JSON.stringify(msg)}</div>)}
+              : messages.map((msg, index) => (
+                  <ChatRow key={index} message={msg} />
+                ))}
+            <div ref={dummyRef} />
           </div>
 
           <div className="offcanvas-footer p-3 border-top bg-white divChatInput">
