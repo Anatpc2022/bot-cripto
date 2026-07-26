@@ -152,3 +152,19 @@ export async function cleanChat() {
   const response = await axios.delete(`${RIBERBOT_URL}/chat`);
   return response.data;
 }
+
+export async function sendChat(question, files) {
+  console.log(question, files);
+
+  const formData = new FormData();
+  formData.append("question", question);
+
+  if (files && files.length)
+    files.map((file) => formData.append("files[]", file));
+
+  const response = await axios.post(`${RIBERBOT_URL}/chat`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+
+  return response.data;
+}

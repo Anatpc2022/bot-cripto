@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import ChatRow from "./ChatRow";
 import ChatFile from "./ChatFile";
-import { cleanChat } from "../../services/RiberBotService";
+import { cleanChat, sendChat } from "../../services/RiberBotService";
 
 export default function RiberBotChat() {
   const [show, setShow] = useState(false);
@@ -39,7 +39,7 @@ export default function RiberBotChat() {
         temp: true,
       };
       setMessages((prevState) => [...prevState, botResponse]);
-    }, 1000);
+    }, 2000);
 
     const timeout2 = setTimeout(() => {
       const botResponse = {
@@ -48,13 +48,14 @@ export default function RiberBotChat() {
         temp: true,
       };
       setMessages((prevState) => [...prevState, botResponse]);
-    }, 3000);
+    }, 5000);
 
     return [timeout, timeout2];
   }
 
   function btnSendClick() {
     const text = newText.trim();
+    const files = newFiles ? [...newFiles] : [];
     if (!text && !newFiles.length) return;
 
     const newMessage = { text, attachments: newFiles, sender: "user" };
@@ -67,7 +68,24 @@ export default function RiberBotChat() {
 
     const timeouts = startTimeouts();
 
-    //enviar mensagem e anexos
+    sendChat(text, files)
+      .then((result) => {
+        timeouts.map((t) => clearTimeout(t));
+        const botResponse = { text: result.answer, sender: "bot" };
+        setMessages((prevState) => [
+          ...prevState.filter((m) => !m.temp),
+          botResponse,
+        ]);
+      })
+      .catch((err) => {
+        timeouts.map((t) => clearTimeout(t));
+        console.error(err);
+        const botResponse = {
+          text: err.response ? JSON.stringify(err.response.data) : err.message,
+          sender: "bot",
+        };
+        setMessages((prevState) => [...prevState, botResponse]);
+      });
   }
 
   function btnRemoveClick(index) {

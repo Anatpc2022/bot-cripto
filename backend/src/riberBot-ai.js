@@ -142,9 +142,6 @@ const addGridTool = tool({
         
         Se não forem fornecidos os parâmetros lowerLimit e upperLimit manualmente, analise a imagem de gráfico de velas fornecida pelo usuário nesta mensagem ou na anterior, buscando o suporte como parâmetro lowerLimit e resistência como upperLimit.
         Se não tiver sido recebido lowerLimit e upperLimit e também não puder ser aferido por uma imagem de gráfico de velas anexada, solicite ao usuário.
-        Para calcular o parâmetro levels, deve-se dividir a diferença de preço entre lowerLimit e upperLimit pelo percentual desejado de ganho (informado pelo usuário). 
-        Se o número de levels possuir casas decimais, arredonde levels para cima.
-        Se o número de levels for inferior a 3, descartar a criação e avisar ao usuário que essa criptomoeda não está em um bom momento para uma grid com estes objetivos.
         Ao término da criação, se bem sucedida, entregue o 'name' da automação criada pro usuário e avise que ela está desligada.
     `,
   parameters: z.object({
@@ -152,12 +149,27 @@ const addGridTool = tool({
     quantity: z.number(),
     lowerLimit: z.number(),
     upperLimit: z.number(),
-    levels: z.number(),
     token: z.string(),
+    profitability: z.string(),
   }),
-  async execute({ quantity, levels, lowerLimit, upperLimit, symbol, token }) {
+  async execute({
+    quantity,
+    lowerLimit,
+    upperLimit,
+    symbol,
+    token,
+    profitability,
+  }) {
     symbol = symbol.toUpperCase().trim().replace("-", "").replace("/", "");
     token = token.trim();
+    profitability = parseFloat(profitability.replace("%", ""));
+    lowerLimit = parseFloat(lowerLimit);
+    upperLimit = parseFloat(upperLimit);
+
+    const levels = Math.floor(
+      ((upperLimit * 100) / lowerLimit - 100) / profitability,
+    );
+    if (levels < 3) throw new Error(`Levels too low.`);
 
     const gridData = {};
     gridData.symbol = symbol;
@@ -169,7 +181,8 @@ const addGridTool = tool({
     const response = await axios.post(`${API_URL}/automations/grid`, gridData, {
       headers: { authorization: token },
     });
-    if (LOGS) logger("RiberBotAI", `add_grid: ${JSON.stringify(gridData)}`);
+    if (LOGS)
+      logger("RiberBotAI", `add_grid: ${JSON.stringify(response.data)}`);
     return response.data;
   },
 });
