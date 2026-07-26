@@ -24,7 +24,7 @@ async function getOrderTemplate(req, res) {
   const id = req.params.id;
   const orderTemplate = await orderTemplatesRepository.getOrderTemplate(
     userId,
-    id
+    id,
   );
   if (!orderTemplate) return res.sendStatus(404);
   if (orderTemplate.userId !== userId) return res.sendStatus(403);
@@ -37,9 +37,18 @@ async function getOrderTemplates(req, res) {
 
   const orderTemplates = await orderTemplatesRepository.getOrderTemplates(
     userId,
-    page
+    page,
   );
   return res.json(orderTemplates);
+}
+
+function getSafeDecimal(value) {
+  return value && typeof value === "string" ? value.replace(",", ".") : value;
+}
+
+function getSafeMultiplier(value) {
+  if (!value) return 1;
+  return value && typeof value === "string" ? value.replace(",", ".") : value;
 }
 
 async function insertOrderTemplate(req, res) {
@@ -50,22 +59,25 @@ async function insertOrderTemplate(req, res) {
   const alreadyExists = await orderTemplatesRepository.orderTemplateExists(
     userId,
     newOrderTemplate.name,
-    newOrderTemplate.symbol
+    newOrderTemplate.symbol,
   );
   if (alreadyExists)
     return res
       .status(409)
       .send(`Já existe um modelo de pedido com esses parâmetros.`);
 
-  newOrderTemplate.limitPriceMultiplier = newOrderTemplate.limitPriceMultiplier
-    ? newOrderTemplate.limitPriceMultiplier.replace(",", ".")
-    : 1;
-  newOrderTemplate.stopPriceMultiplier = newOrderTemplate.stopPriceMultiplier
-    ? newOrderTemplate.stopPriceMultiplier.replace(",", ".")
-    : 1;
-  newOrderTemplate.quantityMultiplier = newOrderTemplate.quantityMultiplier
-    ? newOrderTemplate.quantityMultiplier.replace(",", ".")
-    : 1;
+  newOrderTemplate.limitPrice = getSafeDecimal(newOrderTemplate.limitPrice);
+  newOrderTemplate.limitPriceMultiplier = getSafeMultiplier(
+    newOrderTemplate.limitPriceMultiplier,
+  );
+  newOrderTemplate.stopPrice = getSafeDecimal(newOrderTemplate.stopPrice);
+  newOrderTemplate.stopPriceMultiplier = getSafeMultiplier(
+    newOrderTemplate.stopPriceMultiplier,
+  );
+  newOrderTemplate.quantity = getSafeDecimal(newOrderTemplate.quantity);
+  newOrderTemplate.quantityMultiplier = getSafeMultiplier(
+    newOrderTemplate.quantityMultiplier,
+  );
 
   if (
     !validatePrice(newOrderTemplate.limitPrice) ||
@@ -74,9 +86,8 @@ async function insertOrderTemplate(req, res) {
   )
     return res.status(422).send(`Preço e/ou quantidade inválidos`);
 
-  const orderTemplate = await orderTemplatesRepository.insertOrderTemplate(
-    newOrderTemplate
-  );
+  const orderTemplate =
+    await orderTemplatesRepository.insertOrderTemplate(newOrderTemplate);
   res.status(201).json(orderTemplate.get({ plain: true }));
 }
 
@@ -88,20 +99,23 @@ async function updateOrderTemplate(req, res) {
 
   const currentOrderTemplate = await orderTemplatesRepository.getOrderTemplate(
     userId,
-    id
+    id,
   );
   if (!currentOrderTemplate) return res.sendStatus(404);
   if (currentOrderTemplate.userId !== userId) return res.sendStatus(403);
 
-  newOrderTemplate.limitPriceMultiplier = newOrderTemplate.limitPriceMultiplier
-    ? newOrderTemplate.limitPriceMultiplier.replace(",", ".")
-    : 1;
-  newOrderTemplate.stopPriceMultiplier = newOrderTemplate.stopPriceMultiplier
-    ? newOrderTemplate.stopPriceMultiplier.replace(",", ".")
-    : 1;
-  newOrderTemplate.quantityMultiplier = newOrderTemplate.quantityMultiplier
-    ? newOrderTemplate.quantityMultiplier.replace(",", ".")
-    : 1;
+  newOrderTemplate.limitPrice = getSafeDecimal(newOrderTemplate.limitPrice);
+  newOrderTemplate.limitPriceMultiplier = getSafeMultiplier(
+    newOrderTemplate.limitPriceMultiplier,
+  );
+  newOrderTemplate.stopPrice = getSafeDecimal(newOrderTemplate.stopPrice);
+  newOrderTemplate.stopPriceMultiplier = getSafeMultiplier(
+    newOrderTemplate.stopPriceMultiplier,
+  );
+  newOrderTemplate.quantity = getSafeDecimal(newOrderTemplate.quantity);
+  newOrderTemplate.quantityMultiplier = getSafeMultiplier(
+    newOrderTemplate.quantityMultiplier,
+  );
 
   if (
     !validatePrice(newOrderTemplate.limitPrice) ||
@@ -113,7 +127,7 @@ async function updateOrderTemplate(req, res) {
   const orderTemplate = await orderTemplatesRepository.updateOrderTemplate(
     userId,
     id,
-    newOrderTemplate
+    newOrderTemplate,
   );
 
   const automations =
@@ -132,7 +146,7 @@ async function deleteOrderTemplate(req, res) {
 
   const currentOrderTemplate = await orderTemplatesRepository.getOrderTemplate(
     userId,
-    id
+    id,
   );
   if (!currentOrderTemplate) return res.sendStatus(404);
   if (currentOrderTemplate.userId !== userId) return res.sendStatus(403);
@@ -153,7 +167,7 @@ async function getAllOrderTemplates(req, res) {
   const symbol = req.params.symbol;
   const orderTemplates = await orderTemplatesRepository.getAllOrderTemplates(
     userId,
-    symbol
+    symbol,
   );
   res.json(orderTemplates);
 }
