@@ -24,7 +24,7 @@ export default function MonitorIndex(props) {
 
   useEffect(() => {
     setIndexes(
-      props.indexes ? props.indexes.split(",").filter((ix) => ix) : []
+      props.indexes ? props.indexes.split(",").filter((ix) => ix) : [],
     );
   }, [props.indexes]);
 
@@ -49,7 +49,9 @@ export default function MonitorIndex(props) {
 
   function onAddIndexClick() {
     if (selectedIndex === "NONE") return;
-    const params = selectedIndex.value ? "_" + selectedIndex.value : "";
+    const params = selectedIndex.value
+      ? "_" + selectedIndex.value.replaceAll(",", "_")
+      : "";
     indexes.push(selectedIndex.index + params);
     setIndexes(indexes);
     props.onChange({ target: { id: "indexes", value: indexes.join(",") } });
