@@ -18,7 +18,7 @@ function getByAutomation(automationId) {
 async function updateGrid(id, newGrid) {
   const currentGrid = await GridModel.findByPk(id);
 
-  if (!newGrid.condition && newGrid.condition !== currentGrid.condition)
+  if (newGrid.condition && newGrid.condition !== currentGrid.condition)
     currentGrid.condition = newGrid.condition;
 
   await currentGrid.save();
