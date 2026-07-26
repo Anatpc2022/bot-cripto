@@ -583,7 +583,7 @@ function KST(
   SMAROCPer2 = 10,
   SMAROCPer3 = 10,
   SMAROCPer4 = 15,
-  signalPeriod = 3
+  signalPeriod = 3,
 ) {
   ROCPer1 = parseInt(ROCPer1);
   ROCPer2 = parseInt(ROCPer2);
@@ -816,7 +816,7 @@ function StochRSI(
   dPeriod = 3,
   kPeriod = 3,
   rsiPeriod = 14,
-  stochasticPeriod = 14
+  stochasticPeriod = 14,
 ) {
   dPeriod = parseInt(dPeriod);
   kPeriod = parseInt(kPeriod);
@@ -825,7 +825,7 @@ function StochRSI(
 
   if (
     [dPeriod, kPeriod, rsiPeriod, stochasticPeriod].some(
-      (p) => p >= ohlc.close.length
+      (p) => p >= ohlc.close.length,
     )
   )
     return { current: false, previous: false };
@@ -908,17 +908,17 @@ function ichimoku(
   ohlc,
   conversionPeriod = 9,
   basePeriod = 26,
-  span = 52,
-  displacement = 26
+  spanPeriod = 52,
+  displacement = 26,
 ) {
   conversionPeriod = parseInt(conversionPeriod);
   basePeriod = parseInt(basePeriod);
-  span = parseInt(span);
+  spanPeriod = parseInt(spanPeriod);
   displacement = parseInt(displacement);
 
   if (
-    [conversionPeriod, basePeriod, span, displacement].some(
-      (p) => p >= ohlc.high.length
+    [conversionPeriod, basePeriod, spanPeriod, displacement].some(
+      (p) => p >= ohlc.high.length,
     )
   )
     return { current: false, previous: false };
@@ -928,7 +928,7 @@ function ichimoku(
     low: ohlc.low,
     conversionPeriod,
     basePeriod,
-    span,
+    spanPeriod,
     displacement,
   });
   return {
