@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import ChatRow from "./ChatRow";
+import ChatFile from "./ChatFile";
+import { cleanChat } from "../../services/RiberBotService";
 
 export default function RiberBotChat() {
   const [show, setShow] = useState(false);
@@ -18,7 +20,10 @@ export default function RiberBotChat() {
 
   function closeChat() {
     setShow(false);
-    //limpar a conversa
+    cleanChat();
+    setNewText("");
+    setNewFiles([]);
+    setMessages([]);
   }
 
   function onFilesChange(event) {
@@ -62,7 +67,13 @@ export default function RiberBotChat() {
 
     const timeouts = startTimeouts();
 
-    //enviar mensagem
+    //enviar mensagem e anexos
+  }
+
+  function btnRemoveClick(index) {
+    const copy = [...newFiles];
+    copy.splice(index, 1);
+    setNewFiles(copy);
   }
 
   const defaultMessage = (
@@ -105,6 +116,25 @@ export default function RiberBotChat() {
           </div>
 
           <div className="offcanvas-footer p-3 border-top bg-white divChatInput">
+            {newFiles.length > 0 && (
+              <div className="mb-2">
+                <div
+                  className="small text-muted mb-1"
+                  style={{ fontSize: "10px" }}
+                >
+                  Anexos:
+                </div>
+                {newFiles.map((file, index) => (
+                  <ChatFile
+                    key={index}
+                    index={index}
+                    file={file}
+                    onRemove={btnRemoveClick}
+                  />
+                ))}
+              </div>
+            )}
+
             <textarea
               ref={textInputRef}
               className="form-control mb-2"
