@@ -127,3 +127,8 @@ svg {
 .divDefaultMessage ul li {
   font-size: 11px;
 }
+
+.divChatInput {
+  position: sticky;
+  bottom: 0;
+}
