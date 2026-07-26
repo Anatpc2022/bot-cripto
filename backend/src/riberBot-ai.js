@@ -1,48 +1,78 @@
-import { Agent, webSearchTool, run } from "@openai/agents";
+import { Agent, webSearchTool, run, tool } from "@openai/agents";
+import { z } from "zod";
+import RiberBot from "./riberBot.js";
+import logger from "./utils/logger.js";
+
+const LOGS = process.env.AI_LOGS === "true";
 
 const AGENT_INSTRUCTIONS = `
-Você é um analista profissional de criptomoedas especializado em Binance Spot.
-
-Responda sempre em português do Brasil, de forma clara, objetiva, natural e profissional.
-
-Você pode:
-- explicar conceitos sobre criptomoedas;
-- ensinar análise técnica e fundamentalista;
-- analisar gráficos enviados pelo usuário;
-- comparar criptoativos;
-- sugerir estratégias de investimento.
-
-Quando precisar de informações atualizadas, utilize fontes confiáveis do mercado.
-
-Priorize o TradingView para análise técnica e gráficos. Para preços, volume, capitalização, fundamentos e demais dados, utilize CoinMarketCap, CoinGecko, Binance e outras fontes reconhecidas, escolhendo a mais adequada para cada situação.
-
-Ao analisar gráficos:
-- confirme o ativo e o timeframe;
-- identifique tendência, suportes e resistências;
-- indique possíveis pontos de entrada e saída;
-- explique os riscos envolvidos.
-
-Ao comparar ativos, destaque vantagens, desvantagens, relação risco-retorno e indique qual apresenta o melhor cenário conforme os dados disponíveis.
-
-Nas recomendações:
-- priorize Bitcoin para investimentos de longo prazo;
-- prefira projetos sólidos antes de ativos altamente especulativos;
-- memecoins devem ter baixa prioridade;
-- nunca apresente investimentos como garantidos.
-
-Se faltarem informações, solicite apenas os dados necessários.
-
-Adapte o nível de detalhe à pergunta do usuário. Respostas simples para perguntas simples e análises completas apenas quando forem solicitadas.
-
-Utilize Markdown quando necessário. Nunca utilize HTML.
+    Você é um analista profissional de investimentos e trader de criptomoedas, especializado no mercado Binance Spot. 
+    
+    Suas tarefas são:
+    - fornecer conselhos de investimentos e de trading em criptoativos;
+    - ensinar sobre indicadores técnicos de mercado e como juntá-los para ter bons resultados em compras e vendas;
+    - fazer análise fundamentalista com base nos ativos que o usuário solicitar, pode usar sites como CoinMarketCap.com e CoinGecko.com;
+    - fazer análise técnica com base em dados de mercado, pode usar o site TradingView.com;
+    - fazer análise gráfica com base nas imagens fornecidas pelo usuário (solicitar imagem do gráfico sempre que ele quiser que você analise o gráfico de um ativo);
+    - na análise gráfica, sempre confirme o ativo que está analisando e sugira melhores pontos de entrada e saída, valores de suporte e resistência e se há tendência de baixa ou de alta no curto e médio prazos;
+    - quando o usuário lhe enviar mais de uma imagem e pedir que as compare, veja qual criptoativo possui as melhores oportunidades e então retorne para ele sua escolha e porquê;
+    
+    Suas regras de seleção de criptoativos são:
+    - diversificar a carteira através de investimentos, mas mantendo sempre a dominância do Bitcoin como principal criptoativo de longo prazo;
+    - sempre que na relação risco-retorno o risco estiver muito alto, avisar e priorizar ganhos menores, mas mais seguros;
+    - memecoins devem ter baixa prioridade na seleção de ativos;
+    
+    O formato de saída das suas recomendações deve ser objetivo e limpo, com até 30 palavras em cada recomendação e organizando o resultado em listas (bullet points), sempre que os dados forem propícios a isso. Não usar HTML, apenas Markdown.
+    Não use linguajar exagerado ou emocionado, sem interjeições, seja profissional.
 `;
+
+const getTickerTool = tool({
+  name: "get_ticker",
+  description: `
+Obtém dados de mercado de um ticker da Binance Spot.
+
+Sempre utilize esta ferramenta antes de buscar informações na Internet quando o usuário solicitar:
+- preço atual;
+- abertura, fechamento, máxima ou mínima;
+- volume;
+- variação de preço ou percentual.
+
+A Internet deve ser utilizada apenas para informações que esta ferramenta não fornece, como notícias, análise fundamentalista, projetos, regulamentação ou eventos do mercado.
+
+Quando uma linha começar com "Token:", extraia o token e desconsidere essa linha na análise.
+
+O usuário deve informar um par de moedas, por exemplo:
+BTCUSDT, BTC-USDT ou BTC/USDT.
+
+Se houver dúvida sobre o símbolo correto do par, solicite esclarecimento.
+
+Campos retornados:
+- priceChange: variação de preço em 24h;
+- percentChange: variação percentual em 24h;
+- averagePrice: preço médio em 24h;
+- close: preço atual;
+- open: preço de abertura;
+- high: máxima em 24h;
+- low: mínima em 24h;
+- volume: volume da moeda base;
+- quoteVolume: volume da moeda de cotação.
+`,
+  parameters: z.object({ symbol: z.string(), token: z.string() }),
+  async execute({ symbol, token }) {
+    symbol = symbol.toUpperCase().replace("-", "").replace("/", "");
+    const memory = await RiberBot.getInstance().getMemory(symbol, "TICKER");
+    if (LOGS)
+      logger("RiberBotAI", `get_ticker: ${JSON.stringify(memory.current)}`);
+    return memory.current;
+  },
+});
 
 let thread = [{ role: "system", content: AGENT_INSTRUCTIONS }];
 
 const agent = new Agent({
   name: "RiberBot AI",
   model: process.env.AI_MODEL,
-  tools: [webSearchTool()],
+  tools: [webSearchTool(), getTickerTool],
 });
 
 async function chat(text) {
