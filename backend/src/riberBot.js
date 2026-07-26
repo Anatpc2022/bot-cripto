@@ -236,14 +236,18 @@ export default class RiberBot {
       return false;
     }
 
-    const results = [];
-    for (let i = 0; i < automations.length; i++) {
-      const automation = automations[i];
-      if (this.isLocked(automation.id)) continue;
-
-      const result = await this.evalDecision(memoryKey, automation);
-      if (result) results.push(result);
-    }
+    /**
+     * Melhoria Sugerida:
+     * - desta forma ao invés de executar as automações em série, nós executamos elas em paralelo, aumentando a velocidade de execução total e garantindo que todas automações testadas terão as mesmas informações no MEMORY;
+     * - para cenários onde só existam automações com symbols diferentes, isso não afeta praticamente em nada;
+     * - para cenários onde as automações possuem symbols iguais, isso garante que todas sejam testadas com os mesmos dados, sem atrasos;
+     * - essa melhoria é ensinada em detalhes no curso Hydra, onde um maior paralelismo é crucial pois temos múltiplos usuários na plataforma;
+     */
+    const promises = automations.map((a) => {
+      if (this.isLocked(a.id)) return false;
+      return this.evalDecision(memoryKey, a);
+    });
+    const results = await Promise.all(promises);
 
     if (!results || !results.length) return false;
 
