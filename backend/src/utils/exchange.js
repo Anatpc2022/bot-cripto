@@ -38,8 +38,20 @@ export default class Exchange {
     return this.binance.orderStatus(symbol, orderId);
   }
 
-  orderTrade(symbol, orderId) {
-    return this.binance.trades(symbol, { orderId });
+  async orderTrade(symbol, orderId) {
+    const trades = await this.binance.trades(symbol, { orderId });
+    const quoteTrades = trades.filter((t) =>
+      symbol.endsWith(t.commissionAsset),
+    );
+    if (!quoteTrades || !quoteTrades.length) return false;
+
+    const aggTrade = {
+      commission: quoteTrades
+        .map((t) => parseFloat(t.commission))
+        .reduce((a, b) => a + b),
+      commissionAsset: quoteTrades[0].commissionAsset,
+    };
+    return aggTrade;
   }
 
   tickerStream(callback) {
@@ -48,7 +60,7 @@ export default class Exchange {
       (data, converted) => {
         callback(converted);
       },
-      true
+      true,
     );
   }
 
@@ -60,11 +72,11 @@ export default class Exchange {
       (data) => {
         logger(
           "U-" + this.userId,
-          "userDataStream:subscribed:" + JSON.stringify(data)
+          "userDataStream:subscribed:" + JSON.stringify(data),
         );
         this.binance.options.listenKey = data;
       },
-      () => {}
+      () => {},
     );
   }
 
@@ -75,7 +87,7 @@ export default class Exchange {
       (symbol, interval, chart) => {
         const ohlc = this.binance.populateOHLC(chart);
         callback(ohlc);
-      }
+      },
     );
     if (LOGS)
       logger("U-" + this.userId, `Chart Stream connected at ${streamUrl}`);
@@ -87,7 +99,7 @@ export default class Exchange {
     if (LOGS)
       logger(
         "U-" + this.userId,
-        `Chart Stream terminated at ${symbol.toLowerCase()}@kline_${interval}`
+        `Chart Stream terminated at ${symbol.toLowerCase()}@kline_${interval}`,
       );
   }
 
@@ -104,7 +116,7 @@ export default class Exchange {
       symbol,
       quantity,
       price,
-      options
+      options,
     );
   }
 
@@ -121,7 +133,7 @@ export default class Exchange {
       symbol,
       quantity,
       price,
-      options
+      options,
     );
   }
 }
