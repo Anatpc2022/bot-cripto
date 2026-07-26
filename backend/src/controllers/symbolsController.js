@@ -13,14 +13,14 @@ async function getSymbol(req, res) {
 }
 
 async function syncSymbols() {
-  const usetBlvt = process.env.BINANCE_BLVT === "true";
+  const useBlvt = process.env.BINANCE_BLVT === "true";
   const ignoredCoins = (process.env.IGNORED_COINS || "").split(",");
 
   const exchange = new Exchange();
   const data = await exchange.exchangeInfo();
   let symbols = data.symbols.map((item) => {
     if (
-      !usetBlvt &&
+      !useBlvt &&
       (item.baseAsset.endsWith("UP") || item.baseAsset.endsWith("DOWN"))
     )
       return false;

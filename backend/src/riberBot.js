@@ -193,7 +193,7 @@ export default class RiberBot {
     if (RiberBot.FIAT_COINS.includes(baseAsset) && baseAsset === fiat)
       return baseQty;
 
-    const usd = this.tryUsdConversion(baseAsset, baseQty);
+    const usd = await this.tryUsdConversion(baseAsset, baseQty);
     if (fiat === "USD" || !fiat) return usd;
 
     let ticker = await this.getMemory("USDT" + fiat, indexes.indexKeys.TICKER);
