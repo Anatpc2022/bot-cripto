@@ -4,7 +4,9 @@ import RiberBot from "./riberBot.js";
 import logger from "./utils/logger.js";
 import jwt from "jsonwebtoken";
 import { queryOpenAI } from "./utils/openai-utils.js";
+import axios from "axios";
 
+const API_URL = process.env.BACKEND_URL;
 const LOGS = process.env.AI_LOGS === "true";
 
 const AGENT_INSTRUCTIONS = `
@@ -123,12 +125,67 @@ const analyzeChartTool = tool({
   },
 });
 
+const addGridTool = tool({
+  name: "add_grid",
+  description: `
+        Cria uma nova automação do tipo grid conforme parâmetros obtidos com o usuário e também calculados por você. 
+
+        Quando iniciar uma linha da instrução com a descrição "Token:", pegue o token. Descarte essa linha do seu raciocínio após pegar a informação do token.
+        Se você não conseguir identificar o token logo, peça ao usuário.
+        
+        O usuário deverá informar os seguintes parâmetros (questione os que não forem informados, com exceção dos que possuírem instruções para você calcular ou obter):
+        - symbol: a sigla do par de moedas (ticker). Exemplo: BTCUSDT;
+        - quantity: a quantidade de moeda a ser negociada em cada operação. Ex: 0.001;
+        - profitability: o percentual de ganho que o usuário deseja em cada operação. Ex: 1%;
+        - lowerLimit: o preço-limite inferior da grid;
+        - upperLimit: o preço-limite superior da grid; 
+        
+        Se não forem fornecidos os parâmetros lowerLimit e upperLimit manualmente, analise a imagem de gráfico de velas fornecida pelo usuário nesta mensagem ou na anterior, buscando o suporte como parâmetro lowerLimit e resistência como upperLimit.
+        Se não tiver sido recebido lowerLimit e upperLimit e também não puder ser aferido por uma imagem de gráfico de velas anexada, solicite ao usuário.
+        Para calcular o parâmetro levels, deve-se dividir a diferença de preço entre lowerLimit e upperLimit pelo percentual desejado de ganho (informado pelo usuário). 
+        Se o número de levels possuir casas decimais, arredonde levels para cima.
+        Se o número de levels for inferior a 3, descartar a criação e avisar ao usuário que essa criptomoeda não está em um bom momento para uma grid com estes objetivos.
+        Ao término da criação, se bem sucedida, entregue o 'name' da automação criada pro usuário e avise que ela está desligada.
+    `,
+  parameters: z.object({
+    symbol: z.string(),
+    quantity: z.number(),
+    lowerLimit: z.number(),
+    upperLimit: z.number(),
+    levels: z.number(),
+    token: z.string(),
+  }),
+  async execute({ quantity, levels, lowerLimit, upperLimit, symbol, token }) {
+    symbol = symbol.toUpperCase().trim().replace("-", "").replace("/", "");
+    token = token.trim();
+
+    const gridData = {};
+    gridData.symbol = symbol;
+    gridData.quantity = quantity;
+    gridData.levels = levels;
+    gridData.lowerLimit = lowerLimit;
+    gridData.upperLimit = upperLimit;
+
+    const response = await axios.post(`${API_URL}/automations/grid`, gridData, {
+      headers: { authorization: token },
+    });
+    if (LOGS) logger("RiberBotAI", `add_grid: ${JSON.stringify(gridData)}`);
+    return response.data;
+  },
+});
+
 let thread = [{ role: "system", content: AGENT_INSTRUCTIONS }];
 
 const agent = new Agent({
   name: "RiberBot AI",
   model: process.env.AI_MODEL,
-  tools: [webSearchTool(), getTickerTool, getCoinTool, analyzeChartTool],
+  tools: [
+    webSearchTool(),
+    getTickerTool,
+    getCoinTool,
+    analyzeChartTool,
+    addGridTool,
+  ],
 });
 
 async function chat(text, token, filePaths) {
