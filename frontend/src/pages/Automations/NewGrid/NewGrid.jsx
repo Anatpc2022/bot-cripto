@@ -91,7 +91,6 @@ export default function NewGrid() {
 
   function btnSaveClick() {
     setMessage("");
-
     saveGrid(automation.id, { ...automation, ...grid })
       .then((result) => navigate("/automations"))
       .catch((err) => {
@@ -188,7 +187,7 @@ export default function NewGrid() {
                 quantity={grid.quantity || 0}
                 isQuote={true}
                 text={`Quantidade (${symbol.quote || ""}):`}
-                symbol={symbol}
+                symbol={symbol.symbol}
                 allowQuote={true}
                 onChange={onGridChange}
               />
