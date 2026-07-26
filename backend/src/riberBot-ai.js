@@ -3,6 +3,7 @@ import { z } from "zod";
 import RiberBot from "./riberBot.js";
 import logger from "./utils/logger.js";
 import jwt from "jsonwebtoken";
+import { queryOpenAI } from "./utils/openai-utils.js";
 
 const LOGS = process.env.AI_LOGS === "true";
 
@@ -118,6 +119,7 @@ const analyzeChartTool = tool({
   }),
   async execute({ text, filePaths, token }) {
     if (LOGS) logger("RiberBotAI", `analyze_chart: "${text}", ${filePaths}`);
+    return queryOpenAI(text, filePaths, thread);
   },
 });
 
@@ -126,7 +128,7 @@ let thread = [{ role: "system", content: AGENT_INSTRUCTIONS }];
 const agent = new Agent({
   name: "RiberBot AI",
   model: process.env.AI_MODEL,
-  tools: [webSearchTool(), getTickerTool, getCoinTool],
+  tools: [webSearchTool(), getTickerTool, getCoinTool, analyzeChartTool],
 });
 
 async function chat(text, token, filePaths) {
