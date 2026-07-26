@@ -98,6 +98,7 @@ function getAnalysisIndexes(req, res) {
 }
 
 async function chat(req, res) {
+  const token = req.headers["authorization"];
   const question = req.body.question;
   const files = req.files;
 
@@ -106,7 +107,7 @@ async function chat(req, res) {
 
   //processamento da IA
 
-  const answer = await riberBotAi.chat(question);
+  const answer = await riberBotAi.chat(question, token);
   res.json({ question, answer });
 }
 

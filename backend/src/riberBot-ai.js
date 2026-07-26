@@ -2,6 +2,7 @@ import { Agent, webSearchTool, run, tool } from "@openai/agents";
 import { z } from "zod";
 import RiberBot from "./riberBot.js";
 import logger from "./utils/logger.js";
+import jwt from "jsonwebtoken";
 
 const LOGS = process.env.AI_LOGS === "true";
 
@@ -59,11 +60,32 @@ Campos retornados:
 `,
   parameters: z.object({ symbol: z.string(), token: z.string() }),
   async execute({ symbol, token }) {
-    symbol = symbol.toUpperCase().replace("-", "").replace("/", "");
+    symbol = symbol.toUpperCase().replace("-", "").replace("/", "").trim();
     const memory = await RiberBot.getInstance().getMemory(symbol, "TICKER");
     if (LOGS)
       logger("RiberBotAI", `get_ticker: ${JSON.stringify(memory.current)}`);
     return memory.current;
+  },
+});
+
+const getCoinTool = tool({
+  name: "get_coin",
+  description: `
+        Obtém saldo de uma criptomoeda (coin) na carteira do usuário. 
+        Quando iniciar uma linha da instrução com a descrição "Token:", pegue o token. Descarte essa primeira linha do seu raciocínio após pegar a informação do token.
+        Usuário deve preferencialmente informar a sigla da criptomoeda. Exemplo: BTC
+        Se o usuário informar o nome da moeda por extenso e você ficar na dúvida sobre a sigla para ela, pergunte ao usuário.
+        Se você não conseguir identificar o token logo na primeira linha, peça ao usuário.
+    `,
+  parameters: z.object({ coin: z.string(), token: z.string() }),
+  async execute({ coin, token }) {
+    const decoded = jwt.decode(token.trim());
+    const memory = await RiberBot.getInstance().getMemory(
+      coin.toUpperCase().trim(),
+      "WALLET_" + decoded.id,
+    );
+    if (LOGS) logger("RiberBotAI", `get_coin: ${memory}`);
+    return parseFloat(memory);
   },
 });
 
@@ -72,11 +94,11 @@ let thread = [{ role: "system", content: AGENT_INSTRUCTIONS }];
 const agent = new Agent({
   name: "RiberBot AI",
   model: process.env.AI_MODEL,
-  tools: [webSearchTool(), getTickerTool],
+  tools: [webSearchTool(), getTickerTool, getCoinTool],
 });
 
-async function chat(text) {
-  thread.push({ role: "user", content: text });
+async function chat(text, token) {
+  thread.push({ role: "user", content: `Token: ${token}\n\n${text}` });
   const result = await run(agent, thread);
   thread = result.history;
 
