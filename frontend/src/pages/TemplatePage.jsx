@@ -1,6 +1,7 @@
 import Footer from "../components/Footer";
 import SideBar from "../components/Menu/SideBar";
 import Toast from "../components/Toast";
+import RiberBotChat from "../components/Chat/RiberBotChat";
 
 export default function TemplatePage({ children }) {
   return (
@@ -10,6 +11,7 @@ export default function TemplatePage({ children }) {
         {children}
         <Footer />
       </main>
+      <RiberBotChat />
       <Toast />
     </>
   );

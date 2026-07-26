@@ -11,9 +11,8 @@ svg {
 }
 
 .divScroll {
+  overflow: auto;
   max-height: 345px;
-  overflow-y: auto;
-  overflow-x: hidden;
 }
 
 .tableFixHead {
@@ -51,4 +50,80 @@ svg {
 .divScrollBadges {
   overflow: auto;
   max-height: 100px;
+}
+
+/* Chat Styles */
+
+.float {
+  position: fixed;
+  width: 60px;
+  height: 60px;
+  bottom: 40px;
+  right: 40px;
+  background-color: #1f2937 !important;
+  color: #fff;
+  border-radius: 50px;
+  text-align: center;
+  font-size: 30px;
+  box-shadow: 2px 2px 3px #999;
+  z-index: 100;
+}
+
+.offcanvas-custom {
+  position: fixed;
+  top: 0;
+  right: -400px;
+  width: 350px;
+  height: 100%;
+  background: #fff;
+  border-left: 1px solid #dee2e6;
+  box-shadow: -4px 0 12px rgba(0, 0, 0, 0.1);
+  transition:
+    right 0.3s ease,
+    opacity 0.3s ease;
+  opacity: 0;
+  z-index: 1045;
+  border-radius: 0.5rem 0 0 0.5rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.offcanvas-custom.show {
+  right: 0;
+  opacity: 1;
+}
+
+.btnCloseChat {
+  top: 10px;
+  right: 10px;
+  z-index: 1060;
+}
+
+.messages-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.messages-container::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+.messages-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.divMessages {
+  max-height: calc(100vh - 220px);
+  overflow-y: auto;
+  padding-bottom: 1rem;
+  padding-right: 10px;
+  margin-right: -10px;
+}
+
+.divDefaultMessage {
+  font-size: 11px;
+}
+
+.divDefaultMessage ul li {
+  font-size: 11px;
 }
