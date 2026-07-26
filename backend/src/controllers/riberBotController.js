@@ -3,6 +3,8 @@ import indexes from "../utils/indexes.js";
 import monitorsRepository from "../repositories/monitorsRepository.js";
 import automationsRepository from "../repositories/automationsRepository.js";
 import riberBotAi from "../riberBot-ai.js";
+import path from "path";
+import fs from "fs";
 
 async function getMemoryIndexes(req, res) {
   const userId = res.locals.token.id;
@@ -97,22 +99,40 @@ function getAnalysisIndexes(req, res) {
   res.json(indexes.getAnalysisIndexes());
 }
 
+import { fileURLToPath } from "url";
+import { dirname } from "path";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
 async function chat(req, res) {
   const token = req.headers["authorization"];
   const question = req.body.question;
   const files = req.files;
 
-  console.log(files);
-  console.log(files.length);
+  const fileUrls = [];
+  const folder = path.resolve(__dirname, "..", "..", "files");
 
-  //processamento da IA
+  if (files && files.length) {
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const oldPath = path.join(folder, file.filename);
+      const newPath = path.join(folder, file.originalname);
+      fs.renameSync(oldPath, newPath);
+      fileUrls.push(newPath);
+    }
+  }
 
-  const answer = await riberBotAi.chat(question, token);
+  const answer = await riberBotAi.chat(question, token, fileUrls);
   res.json({ question, answer });
 }
 
 async function cleanChat(req, res) {
-  //processamento da IA
+  const folder = path.resolve(__dirname, "..", "..", "files");
+  for (const file of fs.readdirSync(folder)) {
+    fs.unlinkSync(path.join(folder, file));
+  }
+
   await riberBotAi.cleanChat();
   res.sendStatus(204);
 }

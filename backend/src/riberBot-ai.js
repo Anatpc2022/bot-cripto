@@ -89,6 +89,38 @@ const getCoinTool = tool({
   },
 });
 
+const analyzeChartTool = tool({
+  name: "analyze_chart",
+  description: `
+        Analisa anexos de imagens de gráfico de velas enviadas pelo usuário.
+        Quando iniciar uma linha da instrução com a descrição "Token:", pegue o token para uso futuro em tools que precisem de um token. Desconsidere esta linha para análise restante.
+        Quando iniciar uma linha da instrução com a descrição "Imagens:", pegue o array de imagens e use ele como campo filePaths da função. Desconsidere esta linha para análise restante.
+        A imagem enviada é sempre de um gráfico de velas para uma criptomoeda, você deve analisá-lo buscando as seguintes informações:
+        
+        - symbol: par de moedas do gráfico;
+        - interval: tempo gráfico das velas;
+        - support: suporte;
+        - resistance: resistência;
+        - high: valor máximo no período;
+        - low: valor mínimo no período;
+        - trend: tendência de baixa, de alta ou de seguir lateral (estável) no curto prazo;
+        - misc: outras informações e oportunidades que julgar relevantes;
+        
+        Se o usuário não informar nenhuma instrução adicional, apenas devolva as informações coletadas acima.
+        Se o usuário solicitar mais alguma coisa nas instruções, realizar elas em cima dos dados obtidos na imagem (principalmente os dados citados acima).
+        Se o usuário fornecer mais de uma imagem, busque nas instruções o comparativo que deve fazer. Se ele não passar outras instruções, peça a ele.
+        Na sua resposta, você sempre deve incluir a informação de qual par de moedas está sendo apresentado na imagem e o tempo gráfico, para o usuário ter certeza que você compreendeu a imagem.
+    `,
+  parameters: z.object({
+    text: z.string(),
+    filePaths: z.array(z.string()),
+    token: z.string(),
+  }),
+  async execute({ text, filePaths, token }) {
+    if (LOGS) logger("RiberBotAI", `analyze_chart: "${text}", ${filePaths}`);
+  },
+});
+
 let thread = [{ role: "system", content: AGENT_INSTRUCTIONS }];
 
 const agent = new Agent({
@@ -97,8 +129,14 @@ const agent = new Agent({
   tools: [webSearchTool(), getTickerTool, getCoinTool],
 });
 
-async function chat(text, token) {
-  thread.push({ role: "user", content: `Token: ${token}\n\n${text}` });
+async function chat(text, token, filePaths) {
+  if (filePaths && filePaths.length)
+    thread.push({
+      role: "user",
+      content: `Token: ${token}\n\nImagens: ${filePaths}\n\n${text}`,
+    });
+  else thread.push({ role: "user", content: `Token: ${token}\n\n${text}` });
+
   const result = await run(agent, thread);
   thread = result.history;
 
