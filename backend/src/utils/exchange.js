@@ -1,6 +1,6 @@
 import Binance from "node-binance-api";
 import logger from "./logger.js";
-import ordersRepository from "../repositories/ordersRepository.js";
+import { orderTypes } from "../repositories/ordersRepository.js";
 
 const LOGS = process.env.BINANCE_LOGS === "true";
 const APIKEY = process.env.ACCESS_KEY;
@@ -55,13 +55,15 @@ export default class Exchange {
   }
 
   tickerStream(callback) {
-    this.binance.websockets.prevDay(
-      null,
-      (data, converted) => {
-        callback(converted);
-      },
-      true,
-    );
+    this.binance.websockets.miniTicker((data) => {
+      const converted = Object.keys(data).map((key) => {
+        return {
+          symbol: key,
+          ...data[key],
+        };
+      });
+      callback(converted);
+    }, true);
   }
 
   userDataStream(balanceCallback, executionCallback) {
@@ -71,7 +73,7 @@ export default class Exchange {
       executionCallback,
       (data) => {
         logger(
-          "U-" + this.userId,
+          `U-${this.userId}`,
           "userDataStream:subscribed:" + JSON.stringify(data),
         );
         this.binance.options.listenKey = data;
@@ -90,7 +92,7 @@ export default class Exchange {
       },
     );
     if (LOGS)
-      logger("U-" + this.userId, `Chart Stream connected at ${streamUrl}`);
+      logger(`U-${this.userId}`, `Chart Stream connected at ${streamUrl}`);
   }
 
   terminateChartStream(symbol, interval) {
@@ -98,16 +100,16 @@ export default class Exchange {
     this.binance.websockets.terminate(streamUrl);
     if (LOGS)
       logger(
-        "U-" + this.userId,
+        `U-${this.userId}`,
         `Chart Stream terminated at ${symbol.toLowerCase()}@kline_${interval}`,
       );
   }
 
   buy(symbol, quantity, price, options) {
-    if (!options || options.type === ordersRepository.orderTypes.MARKET)
+    if (!options || options.type === orderTypes.MARKET)
       return this.binance.marketBuy(symbol, quantity, options);
 
-    if (options.type === ordersRepository.orderTypes.LIMIT)
+    if (options.type === orderTypes.LIMIT)
       return this.binance.buy(symbol, quantity, price, options);
 
     return this.binance.order(
@@ -121,10 +123,10 @@ export default class Exchange {
   }
 
   sell(symbol, quantity, price, options) {
-    if (!options || options.type === ordersRepository.orderTypes.MARKET)
+    if (!options || options.type === orderTypes.MARKET)
       return this.binance.marketSell(symbol, quantity, options);
 
-    if (options.type === ordersRepository.orderTypes.LIMIT)
+    if (options.type === orderTypes.LIMIT)
       return this.binance.sell(symbol, quantity, price, options);
 
     return this.binance.order(

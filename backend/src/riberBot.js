@@ -1,12 +1,16 @@
 import Cache from "./utils/cache.js";
 import logger from "./utils/logger.js";
-import indexes from "./utils/indexes.js";
+import indexes, { indexKeys } from "./utils/indexes.js";
 import usersRepository from "./repositories/usersRepository.js";
 import mailer from "./utils/email.js";
 import telegram from "./utils/telegram.js";
-import automationsRepository from "./repositories/automationsRepository.js";
+import automationsRepository, {
+  automationTypes,
+} from "./repositories/automationsRepository.js";
 import symbolsRepository from "./repositories/symbolsRepository.js";
-import ordersRepository from "./repositories/ordersRepository.js";
+import ordersRepository, {
+  orderTypes,
+} from "./repositories/ordersRepository.js";
 import Exchange from "./utils/exchange.js";
 import orderTemplatesRepository from "./repositories/orderTemplatesRepository.js";
 import gridsRepository from "./repositories/gridsRepository.js";
@@ -73,7 +77,7 @@ export default class RiberBot {
 
     if (automation.logs)
       logger(
-        "A-" + automation.id,
+        `A-${automation.id}`,
         `Automação adicionada ao CÉREBRO #${automation.id}`,
       );
   }
@@ -105,7 +109,7 @@ export default class RiberBot {
 
       if (automation.logs)
         logger(
-          "A-" + automation.id,
+          `A-${automation.id}`,
           `Automação removida do CÉREBRO #${automation.id}`,
         );
     } finally {
@@ -154,7 +158,7 @@ export default class RiberBot {
 
     const ticker = await this.getMemory(
       baseAsset + quoteAsset,
-      indexes.indexKeys.TICKER,
+      indexKeys.TICKER,
     );
     if (ticker && ticker.current)
       return parseFloat(baseQty) * ticker.current.close;
@@ -164,7 +168,7 @@ export default class RiberBot {
   async getFiatConversion(stablecoin, fiatCoin, fiatQty) {
     const ticker = await this.getMemory(
       stablecoin + fiatCoin,
-      indexes.indexKeys.TICKER,
+      indexKeys.TICKER,
     );
     if (ticker && ticker.current)
       return parseFloat(fiatQty) / ticker.current.close;
@@ -196,10 +200,10 @@ export default class RiberBot {
     const usd = await this.tryUsdConversion(baseAsset, baseQty);
     if (fiat === "USD" || !fiat) return usd;
 
-    let ticker = await this.getMemory("USDT" + fiat, indexes.indexKeys.TICKER);
+    let ticker = await this.getMemory("USDT" + fiat, indexKeys.TICKER);
     if (ticker && ticker.current) return usd * ticker.current.close;
 
-    ticker = await this.getMemory(fiat + "USDT", indexes.indexKeys.TICKER);
+    ticker = await this.getMemory(fiat + "USDT", indexKeys.TICKER);
     if (ticker && ticker.current) return usd / ticker.current.close;
 
     return usd;
@@ -236,13 +240,6 @@ export default class RiberBot {
       return false;
     }
 
-    /**
-     * Melhoria Sugerida:
-     * - desta forma ao invés de executar as automações em série, nós executamos elas em paralelo, aumentando a velocidade de execução total e garantindo que todas automações testadas terão as mesmas informações no MEMORY;
-     * - para cenários onde só existam automações com symbols diferentes, isso não afeta praticamente em nada;
-     * - para cenários onde as automações possuem symbols iguais, isso garante que todas sejam testadas com os mesmos dados, sem atrasos;
-     * - essa melhoria é ensinada em detalhes no curso Hydra, onde um maior paralelismo é crucial pois temos múltiplos usuários na plataforma;
-     */
     const promises = automations.map((a) => {
       if (this.isLocked(a.id)) return false;
       return this.evalDecision(memoryKey, a);
@@ -256,7 +253,7 @@ export default class RiberBot {
 
   isValidQuoteOrder(orderTemplate) {
     return (
-      orderTemplate.type === ordersRepository.orderTypes.MARKET &&
+      orderTemplate.type === orderTypes.MARKET &&
       (["MIN_NOTIONAL", "QUOTE_QTY"].includes(orderTemplate.quantity) ||
         (orderTemplate.side === "BUY" &&
           orderTemplate.quantity === "MAX_WALLET"))
@@ -265,7 +262,7 @@ export default class RiberBot {
 
   async calcQuoteQty(orderTemplate, symbolObj) {
     if (
-      orderTemplate.type !== ordersRepository.orderTypes.MARKET ||
+      orderTemplate.type !== orderTypes.MARKET ||
       parseFloat(orderTemplate.quantity)
     )
       throw new Error(
@@ -282,7 +279,7 @@ export default class RiberBot {
 
       const asset = parseFloat(
         await this.cache.get(
-          `${symbolObj.quote}:${indexes.indexKeys.WALLET}_${orderTemplate.userId}`,
+          `${symbolObj.quote}:${indexKeys.WALLET}_${orderTemplate.userId}`,
         ),
       );
       if (!asset)
@@ -308,56 +305,50 @@ export default class RiberBot {
     switch (price) {
       case "AUTO_ORDER_AVG": {
         const memory = await this.cache.get(
-          `${symbol}:${indexes.indexKeys.AUTO_ORDER}_${automationId}`,
+          `${symbol}:${indexKeys.AUTO_ORDER}_${automationId}`,
         );
         return memory.avgPrice;
       }
       case "AUTO_ORDER_LIMIT": {
         const memory = await this.cache.get(
-          `${symbol}:${indexes.indexKeys.AUTO_ORDER}_${automationId}`,
+          `${symbol}:${indexKeys.AUTO_ORDER}_${automationId}`,
         );
         return memory.limitPrice || memory.avgPrice;
       }
       case "AUTO_ORDER_STOP": {
         const memory = await this.cache.get(
-          `${symbol}:${indexes.indexKeys.AUTO_ORDER}_${automationId}`,
+          `${symbol}:${indexKeys.AUTO_ORDER}_${automationId}`,
         );
         return memory.stopPrice || memory.avgPrice;
       }
       case "LAST_ORDER_AVG": {
         const memory = await this.cache.get(
-          `${symbol}:${indexes.indexKeys.LAST_ORDER}_${userId}`,
+          `${symbol}:${indexKeys.LAST_ORDER}_${userId}`,
         );
         return memory.avgPrice;
       }
       case "LAST_ORDER_LIMIT": {
         const memory = await this.cache.get(
-          `${symbol}:${indexes.indexKeys.LAST_ORDER}_${userId}`,
+          `${symbol}:${indexKeys.LAST_ORDER}_${userId}`,
         );
         return memory.limitPrice || memory.avgPrice;
       }
       case "LAST_ORDER_STOP": {
         const memory = await this.cache.get(
-          `${symbol}:${indexes.indexKeys.LAST_ORDER}_${userId}`,
+          `${symbol}:${indexKeys.LAST_ORDER}_${userId}`,
         );
         return memory.stopPrice || memory.avgPrice;
       }
       case "TICKER_PRICE": {
-        const memory = await this.cache.get(
-          `${symbol}:${indexes.indexKeys.TICKER}`,
-        );
+        const memory = await this.cache.get(`${symbol}:${indexKeys.TICKER}`);
         return memory.current.close;
       }
       case "TICKER_HIGH": {
-        const memory = await this.cache.get(
-          `${symbol}:${indexes.indexKeys.TICKER}`,
-        );
+        const memory = await this.cache.get(`${symbol}:${indexKeys.TICKER}`);
         return memory.current.high;
       }
       case "TICKER_LOW": {
-        const memory = await this.cache.get(
-          `${symbol}:${indexes.indexKeys.TICKER}`,
-        );
+        const memory = await this.cache.get(`${symbol}:${indexKeys.TICKER}`);
         return memory.current.low;
       }
     }
@@ -402,7 +393,7 @@ export default class RiberBot {
       }
     } else {
       const memory = await this.cache.get(
-        `${orderTemplate.symbol}:${indexes.indexKeys.TICKER}`,
+        `${orderTemplate.symbol}:${indexKeys.TICKER}`,
       );
       if (!memory)
         throw new Error(
@@ -434,7 +425,7 @@ export default class RiberBot {
       hasEnough =
         parseFloat(
           await this.cache.get(
-            `${symbolObj.quote}:${indexes.indexKeys.WALLET}_${userId}`,
+            `${symbolObj.quote}:${indexKeys.WALLET}_${userId}`,
           ),
         ) >=
         price * qty;
@@ -442,7 +433,7 @@ export default class RiberBot {
       hasEnough =
         parseFloat(
           await this.cache.get(
-            `${symbolObj.base}:${indexes.indexKeys.WALLET}_${userId}`,
+            `${symbolObj.base}:${indexKeys.WALLET}_${userId}`,
           ),
         ) >= qty;
 
@@ -459,7 +450,7 @@ export default class RiberBot {
     const isBuyOrder = orderTemplate.side === ordersRepository.orderSide.BUY;
     const asset = parseFloat(
       await this.cache.get(
-        `${isBuyOrder ? symbolObj.quote : symbolObj.base}:${indexes.indexKeys.WALLET}_${orderTemplate.userId}`,
+        `${isBuyOrder ? symbolObj.quote : symbolObj.base}:${indexKeys.WALLET}_${orderTemplate.userId}`,
       ),
     );
     if (!asset)
@@ -486,8 +477,8 @@ export default class RiberBot {
     } else if (/^(AUTO|LAST)_ORDER_QTY$/.test(quantity)) {
       const orderIndex =
         quantity === "LAST_ORDER_QTY"
-          ? `${indexes.indexKeys.LAST_ORDER}_${orderTemplate.userId}`
-          : `${indexes.indexKeys.AUTO_ORDER}_${automationId}`;
+          ? `${indexKeys.LAST_ORDER}_${orderTemplate.userId}`
+          : `${indexKeys.AUTO_ORDER}_${automationId}`;
       const lastOrder = await this.cache.get(
         `${orderTemplate.symbol}:${orderIndex}`,
       );
@@ -588,8 +579,8 @@ export default class RiberBot {
       if (result.code !== undefined && result.code < 0)
         throw new Error(result.msg);
     } catch (err) {
-      logger("A-" + automation.id, err.body ? err.body : err);
-      logger("A-" + automation.id, order);
+      logger(`A-${automation.id}`, err.body ? err.body : err);
+      logger(`A-${automation.id}`, order);
       return {
         type: "error",
         text: `Falha na Ordem ! ${err.body ? err.body : err.message}`,
@@ -626,7 +617,7 @@ export default class RiberBot {
     });
 
     if (automation.logs)
-      logger("A-" + automation.id, savedOrder.get({ plain: true }));
+      logger(`A-${automation.id}`, savedOrder.get({ plain: true }));
     return savedOrder;
   }
 
@@ -635,7 +626,7 @@ export default class RiberBot {
 
     if (automation.logs)
       logger(
-        "A-" + automation.id,
+        `A-${automation.id}`,
         `RiberBot está na zona da grid em ${automation.name}`,
       );
 
@@ -648,7 +639,7 @@ export default class RiberBot {
 
       if (automation.logs)
         logger(
-          "A-" + automation.id,
+          `A-${automation.id}`,
           `RiberBot avaliou uma condição em ${automation.name} => ${grid.condition}`,
         );
 
@@ -676,7 +667,7 @@ export default class RiberBot {
         await transaction.commit();
       } catch (err) {
         await transaction.rollback();
-        logger("A-" + automation.id, err);
+        logger(`A-${automation.id}`, err);
         return {
           type: "error",
           text: `RiberBot não é possível gerar grids para ${automation.name}. ${err.message}`,
@@ -696,10 +687,6 @@ export default class RiberBot {
   async evalDecision(memoryKey, automation) {
     if (!automation || !memoryKey) return false;
 
-    /**
-     * MELHORIA SUGERIDA PARA MAIOR EFICIÊNCIA DO SEMÁFORO
-     * Ao tirar os dois ifs do try/finally, evitamos que os returns deles disparem o desbloqueio do cérebro por engano em casos de concorrência.
-     */
     const isValid = await this.checkActivation(automation, memoryKey);
     if (!isValid) return false;
 
@@ -708,11 +695,12 @@ export default class RiberBot {
     try {
       this.setLocked(automation.id, true);
 
-      if (automation.type === "GRID") return this.gridEval(automation);
+      if (automation.type === automationTypes.GRID)
+        return this.gridEval(automation);
 
       if (LOGS || automation.logs)
         logger(
-          "A-" + automation.id,
+          `A-${automation.id}`,
           `RiberBot avaliou uma condição em '${automation.name}'`,
         );
 
@@ -758,26 +746,27 @@ export default class RiberBot {
 
       if (automation.logs && result)
         logger(
-          "A-" + automation.id,
-          `Resultado para '${automation.name}' was ${JSON.stringify(
-            result,
-          )} at ${new Date()}`,
+          `A-${automation.id}`,
+          `Resultado para '${automation.name}' era ${JSON.stringify(result)} at ${new Date()}`,
         );
 
       result.automationId = automation.id;
 
       return result || false;
     } catch (err) {
-      if (automation.logs) logger("A-" + automation.id, err);
+      if (automation.logs) logger(`A-${automation.id}`, err);
       return {
         type: "error",
         text: `Erro em evalDecision para '${automation.name}': ${err.message}`,
         automationId: automation.id,
       };
     } finally {
-      setTimeout(() => {
-        this.setLocked(automation.id, false);
-      }, INTERVAL);
+      setTimeout(
+        () => {
+          this.setLocked(automation.id, false);
+        },
+        automation.type === automationTypes.GRID ? 0 : INTERVAL,
+      );
     }
   }
 
@@ -810,7 +799,7 @@ export default class RiberBot {
     await telegram(telegramChat, message ? message : defaultMessage);
     if (automation.logs)
       logger(
-        "A-" + automation.id,
+        `A-${automation.id}`,
         `Telegram enviado pela automação '${automation.name}'!`,
       );
     return {
@@ -825,7 +814,7 @@ export default class RiberBot {
     await mailer(message ? message : defaultMessage, email, defaultMessage);
     if (automation.logs)
       logger(
-        "A-" + automation.id,
+        `A-${automation.id}`,
         `E-mail enviado pela automação '${automation.name}'!`,
       );
     return {
@@ -862,10 +851,10 @@ export default class RiberBot {
 
     if (LOGS || automation.logs) {
       logger(
-        "A-" + automation.id,
+        `A-${automation.id}`,
         `RiberBot tentando analizar:\n${evalCondition} at ${automation.name}`,
       );
-      logger("A-" + automation.id, MEMORY);
+      logger(`A-${automation.id}`, MEMORY);
     }
 
     return evalCondition
@@ -901,10 +890,10 @@ export default class RiberBot {
 
     return (
       automation.type === "GRID" ||
-      memoryKey.indexOf(`:${indexes.indexKeys.LAST_ORDER}`) !== -1 ||
-      memoryKey.indexOf(`:${indexes.indexKeys.AUTO_ORDER}`) !== -1 ||
-      memoryKey.indexOf(`:${indexes.indexKeys.LAST_CANDLE}`) !== -1 ||
-      memoryKey.indexOf(`:${indexes.indexKeys.PREVIOUS_CANDLE}`) !== -1
+      memoryKey.indexOf(`:${indexKeys.LAST_ORDER}`) !== -1 ||
+      memoryKey.indexOf(`:${indexKeys.AUTO_ORDER}`) !== -1 ||
+      memoryKey.indexOf(`:${indexKeys.LAST_CANDLE}`) !== -1 ||
+      memoryKey.indexOf(`:${indexKeys.PREVIOUS_CANDLE}`) !== -1
     );
   }
 
@@ -929,16 +918,8 @@ export default class RiberBot {
     executeAutomations = true,
   ) {
     const ticker = { ...originalTicker };
-    ticker.priceChange = parseFloat(ticker.priceChange);
-    ticker.percentChange = parseFloat(ticker.percentChange);
-    ticker.averagePrice = parseFloat(ticker.averagePrice);
-    ticker.prevClose = parseFloat(ticker.prevClose);
+
     ticker.close = parseFloat(ticker.close);
-    ticker.closeQty = parseFloat(ticker.closeQty);
-    ticker.bestBid = parseFloat(ticker.bestBid);
-    ticker.bestBidQty = parseFloat(ticker.bestBidQty);
-    ticker.bestAsk = parseFloat(ticker.bestAsk);
-    ticker.bestAskQty = parseFloat(ticker.bestAskQty);
     ticker.open = parseFloat(ticker.open);
     ticker.high = parseFloat(ticker.high);
     ticker.low = parseFloat(ticker.low);
@@ -946,12 +927,6 @@ export default class RiberBot {
     ticker.quoteVolume = parseFloat(ticker.quoteVolume);
 
     delete ticker.eventTime;
-    delete ticker.eventType;
-    delete ticker.lastTradeId;
-    delete ticker.firstTradeId;
-    delete ticker.numTrades;
-    delete ticker.closeTime;
-    delete ticker.openTime;
     delete ticker.symbol;
 
     const currentMemory = await this.getMemory(symbol, index);
@@ -975,11 +950,11 @@ export default class RiberBot {
     if (value.get) value = value.get({ plain: true });
 
     if (
-      index.startsWith(indexes.indexKeys.LAST_ORDER) ||
-      index.startsWith(indexes.indexKeys.AUTO_ORDER)
+      index.startsWith(indexKeys.LAST_ORDER) ||
+      index.startsWith(indexKeys.AUTO_ORDER)
     )
       return this.updateOrderMemory(index, value, executeAutomations);
-    else if (index === indexes.indexKeys.TICKER)
+    else if (index === indexKeys.TICKER)
       return this.updateTickerMemory(symbol, index, value, executeAutomations);
     else
       return this.setCache(symbol, index, interval, value, executeAutomations);
@@ -1146,7 +1121,7 @@ export default class RiberBot {
     const grids = [];
     const differences = [];
 
-    const tickerIndex = `${automation.symbol}:${indexes.indexKeys.TICKER}`;
+    const tickerIndex = `${automation.symbol}:${indexKeys.TICKER}`;
     const ticker = await this.cache.get(tickerIndex);
     if (!ticker) throw new Error(`There is no ticker for ${automation.symbol}`);
     const currentPrice = parseFloat(ticker.current.close);

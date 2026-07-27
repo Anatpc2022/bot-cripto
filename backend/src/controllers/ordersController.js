@@ -1,4 +1,6 @@
-import ordersRepository from "../repositories/ordersRepository.js";
+import ordersRepository, {
+  orderTypes,
+} from "../repositories/ordersRepository.js";
 import Exchange from "../utils/exchange.js";
 import logger from "../utils/logger.js";
 import RiberBot from "../riberBot.js";
@@ -31,7 +33,7 @@ async function cancelOrder(req, res) {
     });
     res.json(order.get({ plain: true }));
   } catch (err) {
-    logger("U-" + userId, err.body ? JSON.stringify(err.body) : err.message);
+    logger(`U-${userId}`, err.body ? JSON.stringify(err.body) : err.message);
     return res.status(400).json(err.body ? err.body : err.message);
   }
 }
@@ -77,7 +79,7 @@ async function syncOrder(req, res) {
     await order.save();
     res.json(order.get({ plain: true }));
   } catch (err) {
-    logger("U-" + userId, err.body ? JSON.stringify(err.body) : err.message);
+    logger(`U-${userId}`, err.body ? JSON.stringify(err.body) : err.message);
     return res.status(400).json(err.body ? err.body : err.message);
   }
 }
@@ -102,7 +104,7 @@ async function placeOrder(req, res) {
       userId,
       symbol,
       quantity: options && options.quoteOrderQty ? "" : quantity,
-      type: options ? options.type : ordersRepository.orderTypes.MARKET,
+      type: options ? options.type : orderTypes.MARKET,
       side,
       limitPrice,
       stopPrice: options ? options.stopPrice : null,
@@ -113,7 +115,7 @@ async function placeOrder(req, res) {
     });
     res.status(201).json(order.get({ plain: true }));
   } catch (err) {
-    logger("U-" + userId, err.body ? JSON.stringify(err.body) : err.message);
+    logger(`U-${userId}`, err.body ? JSON.stringify(err.body) : err.message);
     return res.status(400).json(err.body ? err.body : err.message);
   }
 }

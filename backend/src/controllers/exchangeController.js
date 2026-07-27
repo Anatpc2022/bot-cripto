@@ -22,14 +22,14 @@ async function getBalance(req, res, next) {
           partial = await riberBot.tryFiatConversion(coin, partial, FIAT);
         info[coin].fiatEstimate = partial;
         total += partial;
-      })
+      }),
     );
 
     info.fiatEstimate = `~${FIAT} ${total.toFixed(2)}`;
     res.json(info);
   } 
   catch (err) {
-    logger("U-" + userId, err.response ? err.response.data : err.message);
+    logger(`U-${userId}`, err.response ? err.response.data : err.message);
     res.status(500).send(err.response ? err.response.data : err.message);
   }
 }

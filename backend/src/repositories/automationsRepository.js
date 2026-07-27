@@ -1,8 +1,9 @@
 import { Op } from "sequelize";
 import automationModel from "../models/automationModel.js";
 
-const automationTypes = {
+export const automationTypes = {
   REGULAR: "REGULAR",
+  GRID: "GRID",
 };
 
 async function automationExists(userId, symbol, name) {

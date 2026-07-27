@@ -2,7 +2,7 @@ import orderModel from "../models/orderModel.js";
 import Sequelize, { Op } from "sequelize";
 import AutomationModel from "../models/automationModel.js";
 
-const orderTypes = {
+export const orderTypes = {
   MARKET: "MARKET",
   LIMIT: "LIMIT",
   STOP_LOSS: "STOP_LOSS",
@@ -208,7 +208,7 @@ export default {
   updateOrderById,
   updateOrderByOrderId,
   getLastFilledOrders,
-  getLastAutomationOrders,
   removeAutomationFromOrders,
+  getLastAutomationOrders,
   getReportOrders,
 };

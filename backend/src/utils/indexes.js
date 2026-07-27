@@ -941,7 +941,7 @@ function execCalc(indexName, ohlc, ...params) {
   return getAnalysisIndexes()[indexName].execution(ohlc, ...params);
 }
 
-const indexKeys = {
+export const indexKeys = {
   WALLET: "WALLET",
   LAST_ORDER: "LAST_ORDER",
   PREVIOUS_CANDLE: "PREVIOUS_CANDLE",
